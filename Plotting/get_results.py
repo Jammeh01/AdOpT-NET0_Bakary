@@ -8,8 +8,8 @@ from matplotlib.ticker import PercentFormatter
 from adopt_net0 import extract_datasets_from_h5group
 
 #options
-sensitivity = 1
-zeeland = 0
+sensitivity = 0
+zeeland = 1
 
 if sensitivity:
     data_to_excel_path = 'C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long_sensitivity.xlsx'
