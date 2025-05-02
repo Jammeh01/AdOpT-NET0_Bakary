@@ -112,12 +112,12 @@ if execute == 1:
     sensitivity = 'OptBIO'
     scope3 = 1
     run_with_emission_limit = 1
-    # intervals = ['2040', '2050']
-    intervals = ['2030', '2040', '2050']
+    intervals = ['2040', '2050']
+    # intervals = ['2030', '2040', '2050']
     interval_emissionLim = {'2030': 1, '2040': 0.5, '2050': 0}
     nr_DD_days = 10
-    take_prev_solution = 0
-    prev_emissions = 'no'
+    take_prev_solution = 1
+    prev_emissions = 538197.8705
     pyhub = {}
 
     for i, interval in enumerate(intervals):
@@ -150,8 +150,8 @@ if execute == 1:
         # solver settings
         model_config['solveroptions']['timelim']['value'] = 24*30
         model_config['solveroptions']['mipgap']['value'] = 0.01
-        model_config['solveroptions']['threads']['value'] = 12
-        model_config['solveroptions']['nodefilestart']['value'] = 200
+        model_config['solveroptions']['threads']['value'] = 24
+        model_config['solveroptions']['nodefilestart']['value'] = 500
 
         # change save options
         model_config['reporting']['save_summary_path']['value'] = resultpath + sensitivity

@@ -17,7 +17,7 @@ if execute == 1:
     node = 'Chemelot'
     scope3 = 1
     run_with_emission_limit = 1
-    intervals = ['2040', '2050']
+    intervals = ['2040']
     # intervals = ['2030', '2040', '2050']
     interval_emissionLim = {'2030': 1, '2040': 0.5, '2050': 0}
     nr_DD_days = 10
@@ -54,7 +54,7 @@ if execute == 1:
         # solver settings
         model_config['solveroptions']['timelim']['value'] = 24*30
         model_config['solveroptions']['mipgap']['value'] = 0.01
-        model_config['solveroptions']['threads']['value'] = 8
+        model_config['solveroptions']['threads']['value'] = 12
         model_config['solveroptions']['nodefilestart']['value'] = 200
 
         #change save options

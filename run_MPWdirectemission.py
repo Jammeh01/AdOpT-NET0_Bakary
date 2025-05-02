@@ -13,7 +13,7 @@ execute = 1
 if execute == 1:
     # Specify the path to your input data
     casepath = "Z:/AdOpt_NET0/AdOpt_casestudies/MY/MY_Chemelot_gf_"
-    resultpath = "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionScope Greenfield/"
+    resultpath = "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Greenfield/"
     json_filepath = Path(casepath) / "ConfigModel.json"
 
     sensitivity = 'MPWemission'
@@ -59,8 +59,8 @@ if execute == 1:
         # solver settings
         model_config['solveroptions']['timelim']['value'] = 24*30
         model_config['solveroptions']['mipgap']['value'] = 0.01
-        model_config['solveroptions']['threads']['value'] = 24
-        model_config['solveroptions']['nodefilestart']['value'] = 400
+        model_config['solveroptions']['threads']['value'] = 12
+        model_config['solveroptions']['nodefilestart']['value'] = 200
 
         #change save options
         model_config['reporting']['save_summary_path']['value'] = resultpath + sensitivity
@@ -108,7 +108,7 @@ execute = 1
 if execute == 1:
     # Specify the base path to your input data
     casepath = "Z:/AdOpt_NET0/AdOpt_casestudies/MY/MY_Chemelot_bf_"
-    resultpath = "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionScope Brownfield/"
+    resultpath = "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Brownfield/"
 
     # select simulation types
     sensitivity = 'MPWemission'
@@ -153,8 +153,8 @@ if execute == 1:
         # solver settings
         model_config['solveroptions']['timelim']['value'] = 24*30
         model_config['solveroptions']['mipgap']['value'] = 0.01
-        model_config['solveroptions']['threads']['value'] = 24
-        model_config['solveroptions']['nodefilestart']['value'] = 400
+        model_config['solveroptions']['threads']['value'] = 12
+        model_config['solveroptions']['nodefilestart']['value'] = 200
 
         #change save options
         model_config['reporting']['save_summary_path']['value'] = resultpath + sensitivity

@@ -26,9 +26,9 @@ if execute == 1:
     interval_emissionLim = {'2030': 1, '2040': 0.5, '2050': 0}
     nr_DD_days = 10
     prev_from_file = 1
-    emission_2030 = 522907.4304
+    emission_2030 = 522537.2155
     h5_path_prev = Path(
-        "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Brownfield/Chemelot/20250408154656_2030_minC_DD10-1/optimization_results.h5")
+        "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Brownfield/Chemelot/20250416112938_2030_minC_DD10-1/optimization_results.h5")
     pyhub = {}
 
     for i, interval in enumerate(intervals):
