@@ -30,11 +30,9 @@ class CementHybridCCS(Technology):
         """
         super().__init__(tec_data)
 
-        self.component_options.emissions_based_on = "output"
-        self.component_options.size_based_on = "output"
-        self.component_options.main_output_carrier = tec_data["Performance"][
-            "main_output_carrier"
-        ]
+        self.emissions_based_on = "output"
+        self.size_based_on = "output"
+        self.main_output_carrier = tec_data["Performance"]["main_output_carrier"]
 
     def _define_size(self, b_tec):
         """
@@ -96,8 +94,8 @@ class CementHybridCCS(Technology):
 
         valid_phases_compression = {"gas", "liquid", "supercritical"}
 
-        if self.input_parameters.performance_data["co2_out_is_compressed"]:
-            phase = self.input_parameters.performance_data["phase_of_co2_out"]
+        if self.performance_data["co2_out_is_compressed"]:
+            phase = self.performance_data["phase_of_co2_out"]
             if phase not in valid_phases_compression:
                 raise ValueError(
                     f"Invalid value for 'phase_of_co2_out': '{phase}'. Must be one of {valid_phases_compression}."
@@ -115,9 +113,9 @@ class CementHybridCCS(Technology):
 
         self.processed_coeff.time_independent["size_max_mea"] = (
             self.processed_coeff.time_independent["size_max"]
-            * self.input_parameters.performance_data["performance"]["tCO2_tclinker"]
-            * (1 - self.input_parameters.performance_data["performance"]["CCR_oxy"])
-            * self.input_parameters.performance_data["performance"]["CCR_mea"]
+            * self.performance_data["performance"]["tCO2_tclinker"]
+            * (1 - self.performance_data["performance"]["CCR_oxy"])
+            * self.performance_data["performance"]["CCR_mea"]
         )
 
     def _calculate_bounds(self):
@@ -127,11 +125,9 @@ class CementHybridCCS(Technology):
         super(CementHybridCCS, self)._calculate_bounds()
 
         time_steps = len(self.set_t_performance)
-        emissions_clinker = self.input_parameters.performance_data["performance"][
-            "tCO2_tclinker"
-        ]
-        CCR_oxy = self.input_parameters.performance_data["performance"]["CCR_oxy"]
-        CCR_mea = self.input_parameters.performance_data["performance"]["CCR_mea"]
+        emissions_clinker = self.performance_data["performance"]["tCO2_tclinker"]
+        CCR_oxy = self.performance_data["performance"]["CCR_oxy"]
+        CCR_mea = self.performance_data["performance"]["CCR_mea"]
 
         # Output Bounds
         self.bounds["output"]["CO2captured"] = np.column_stack(
@@ -193,17 +189,13 @@ class CementHybridCCS(Technology):
         )
 
         # Size constraint
-        prod_capacity_clinker = self.input_parameters.performance_data[
-            "prod_capacity_clinker"
-        ]
-        emissions_clinker = self.input_parameters.performance_data["performance"][
-            "tCO2_tclinker"
-        ]
+        prod_capacity_clinker = self.performance_data["prod_capacity_clinker"]
+        emissions_clinker = self.performance_data["performance"]["tCO2_tclinker"]
         alpha_oxy = self.processed_coeff.time_independent["alpha_oxy"]
         beta_oxy = self.processed_coeff.time_independent["beta_oxy"]
         alpha_mea = self.processed_coeff.time_independent["alpha_mea"]
-        CCR_oxy = self.input_parameters.performance_data["performance"]["CCR_oxy"]
-        CCR_mea = self.input_parameters.performance_data["performance"]["CCR_mea"]
+        CCR_oxy = self.performance_data["performance"]["CCR_oxy"]
+        CCR_mea = self.performance_data["performance"]["CCR_mea"]
 
         b_tec.var_co2_captured_mea = pyo.Var(
             self.set_t_performance,
@@ -211,7 +203,7 @@ class CementHybridCCS(Technology):
             bounds=[0, self.processed_coeff.time_independent["size_max_mea"]],
         )
 
-        if self.input_parameters.performance_data["clinker_capacity_is_fixed"]:
+        if self.performance_data["clinker_capacity_is_fixed"]:
 
             def init_size_clinker(const):
                 return b_tec.var_size == prod_capacity_clinker
@@ -352,10 +344,8 @@ class CementHybridCCS(Technology):
         :return: pyomo block with technology model
         """
         c = self.processed_coeff.time_independent
-        technology_model = self.component_options.technology_model
-        emissions_clinker = self.input_parameters.performance_data["performance"][
-            "tCO2_tclinker"
-        ]
+        technology_model = self.technology_model
+        emissions_clinker = self.performance_data["performance"]["tCO2_tclinker"]
 
         b_tec.var_tec_emissions_pos = pyo.Var(
             self.set_t_global, within=pyo.NonNegativeReals
@@ -385,7 +375,6 @@ class CementHybridCCS(Technology):
 
         return b_tec
 
-    # TODO add compressor cpu capex
     def _define_capex_variables(self, b_tec, data: dict):
         """
         Defines variables related to technology capex.
@@ -400,7 +389,7 @@ class CementHybridCCS(Technology):
         discount_rate = set_discount_rate(config, economics)
         fraction_of_year_modelled = data["topology"]["fraction_of_year_modelled"]
         annualization_factor = annualize(
-            discount_rate, economics.lifetime, fraction_of_year_modelled
+            discount_rate, economics["lifetime"], fraction_of_year_modelled
         )
         capex_data_path = Path(__file__).parent.parent.parent.parent
         capex_data_path = (
@@ -415,26 +404,26 @@ class CementHybridCCS(Technology):
             capex_data_path, sheet_name="capex_compressor_mea", index_col=0
         )
 
-        phase = self.input_parameters.performance_data["phase_of_co2_out"]
-        self.economics.other_economics["bp_y_capex_cpu_oxy"] = capex_cpu_oxy_data[
+        phase = self.performance_data["phase_of_co2_out"]
+        self.economics["other_economics"]["bp_y_capex_cpu_oxy"] = capex_cpu_oxy_data[
             phase
         ].tolist()
-        self.economics.other_economics["bp_y_capex_compressor_mea"] = (
+        self.economics["other_economics"]["bp_y_capex_compressor_mea"] = (
             capex_compressor_mea_data[phase].tolist()
         )
 
         def calculate_max_capex_oxy():
             max_capex = (
-                max(economics.capex_data["piecewise_capex"]["bp_y"])
-                + max(self.economics.other_economics["bp_y_capex_cpu_oxy"])
+                max(economics["piecewise_capex"]["bp_y"])
+                + max(self.economics["other_economics"]["bp_y_capex_cpu_oxy"])
             ) * annualization_factor
             bounds = (0, max_capex)
             return bounds
 
         def calculate_max_capex_mea():
             max_capex = (
-                max(economics.other_economics["piecewise_CAPEX_MEA"]["bp_y"])
-                + max(self.economics.other_economics["bp_y_capex_compressor_mea"])
+                max(economics["other_economics"]["piecewise_capex_MEA"]["bp_y"])
+                + max(self.economics["other_economics"]["bp_y_capex_compressor_mea"])
             ) * annualization_factor
             bounds = (0, max_capex)
             return bounds
@@ -469,17 +458,17 @@ class CementHybridCCS(Technology):
         discount_rate = set_discount_rate(config, economics)
         fraction_of_year_modelled = data["topology"]["fraction_of_year_modelled"]
         annualization_factor = annualize(
-            discount_rate, economics.lifetime, fraction_of_year_modelled
+            discount_rate, economics["lifetime"], fraction_of_year_modelled
         )
 
         b_tec.para_unit_capex_mea_annual = pyo.Param(
             domain=pyo.Reals,
-            initialize=economics.other_economics["unit_CAPEX_MEA"]
+            initialize=economics["other_economics"]["unit_capex_MEA"]
             * annualization_factor,
             mutable=True,
         )
 
-        if self.existing and not self.component_options.decommission == "impossible":
+        if self.existing and not self.decommission == "impossible":
             b_tec.para_decommissioning_cost_annual = pyo.Param(
                 domain=pyo.Reals,
                 initialize=annualization_factor * economics.decommission_cost,
@@ -497,27 +486,26 @@ class CementHybridCCS(Technology):
         discount_rate = set_discount_rate(config, economics)
         fraction_of_year_modelled = data["topology"]["fraction_of_year_modelled"]
         annualization_factor = annualize(
-            discount_rate, economics.lifetime, fraction_of_year_modelled
+            discount_rate, economics["lifetime"], fraction_of_year_modelled
         )
 
         # Add capex of CPU and compressor if required
-        if self.input_parameters.performance_data["co2_out_is_compressed"]:
-            economics.capex_data["piecewise_capex"]["bp_y"] = np.add(
-                economics.capex_data["piecewise_capex"]["bp_y"],
-                economics.other_economics["bp_y_capex_cpu_oxy"],
+        if self.performance_data["co2_out_is_compressed"]:
+            economics["piecewise_capex"]["bp_y"] = np.add(
+                economics["piecewise_capex"]["bp_y"],
+                economics["other_economics"]["bp_y_capex_cpu_oxy"],
             )
 
-            economics.other_economics["piecewise_CAPEX_MEA"]["bp_y"] = np.add(
-                economics.other_economics["piecewise_CAPEX_MEA"]["bp_y"],
-                economics.other_economics["bp_y_capex_compressor_mea"],
+            economics["other_economics"]["piecewise_capex_MEA"]["bp_y"] = np.add(
+                economics["other_economics"]["piecewise_capex_MEA"]["bp_y"],
+                economics["other_economics"]["bp_y_capex_compressor_mea"],
             )
 
         # Capex oxyfuel as a piecewise function
         self.big_m_transformation_required = 1
-        bp_x = economics.capex_data["piecewise_capex"]["bp_x"]
+        bp_x = economics["piecewise_capex"]["bp_x"]
         bp_y_annual = [
-            y * annualization_factor
-            for y in economics.capex_data["piecewise_capex"]["bp_y"]
+            y * annualization_factor for y in economics["piecewise_capex"]["bp_y"]
         ]
         b_tec.const_capex_oxy = pyo.Piecewise(
             b_tec.var_capex_oxy,
@@ -529,10 +517,10 @@ class CementHybridCCS(Technology):
         )
 
         # Capex mea as piecewise or linear
-        bp_x = economics.other_economics["piecewise_CAPEX_MEA"]["bp_x"]
+        bp_x = economics["other_economics"]["piecewise_capex_MEA"]["bp_x"]
         bp_y_annual = [
             y * annualization_factor
-            for y in economics.other_economics["piecewise_CAPEX_MEA"]["bp_y"]
+            for y in economics["other_economics"]["piecewise_capex_MEA"]["bp_y"]
         ]
         b_tec.const_capex_mea = pyo.Piecewise(
             b_tec.var_capex_mea,
@@ -550,7 +538,7 @@ class CementHybridCCS(Technology):
 
         # CAPEX
         if self.existing:
-            if self.component_options.decommission == "impossible":
+            if self.decommission == "impossible":
                 # technology cannot be decommissioned
                 b_tec.const_capex = pyo.Constraint(expr=b_tec.var_capex == 0)
             else:
@@ -579,12 +567,12 @@ class CementHybridCCS(Technology):
         discount_rate = set_discount_rate(config, economics)
         fraction_of_year_modelled = data["topology"]["fraction_of_year_modelled"]
         annualization_factor = annualize(
-            discount_rate, economics.lifetime, fraction_of_year_modelled
+            discount_rate, economics["lifetime"], fraction_of_year_modelled
         )
 
         # VARIABLE OPEX
         b_tec.para_opex_variable = pyo.Param(
-            domain=pyo.Reals, initialize=economics.opex_variable, mutable=True
+            domain=pyo.Reals, initialize=economics["opex_variable"], mutable=True
         )
         b_tec.var_opex_variable = pyo.Var(self.set_t_global)
 
@@ -592,7 +580,7 @@ class CementHybridCCS(Technology):
             """opexvar_{t} = Input_{t, maincarrier} * opex_{var}"""
 
             return (
-                b_tec.var_output[t, self.component_options.main_output_carrier]
+                b_tec.var_output[t, self.performance_data["main_output_carrier"]]
                 * b_tec.para_opex_variable
                 == b_tec.var_opex_variable[t]
             )
@@ -604,13 +592,13 @@ class CementHybridCCS(Technology):
         # FIXED OPEX
         b_tec.para_opex_fixed_oxy = pyo.Param(
             domain=pyo.Reals,
-            initialize=economics.other_economics["OPEX_fixed_oxy"],
+            initialize=economics["other_economics"]["opex_fixed_oxy"],
             mutable=True,
         )
 
         b_tec.para_opex_fixed_mea = pyo.Param(
             domain=pyo.Reals,
-            initialize=economics.other_economics["OPEX_fixed_MEA"],
+            initialize=economics["other_economics"]["opex_fixed_MEA"],
             mutable=True,
         )
 
