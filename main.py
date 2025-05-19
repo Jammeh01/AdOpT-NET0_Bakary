@@ -60,7 +60,11 @@ with open(
     path / "period1" / "node_data" / "industrial_cluster" / "Technologies.json", "r"
 ) as json_file:
     technologies = json.load(json_file)
-technologies["new"] = ["CementHybridCCS"]
+technologies["new"] = [
+    "CementEmitter",
+    "PermanentStorage_CO2_simple",
+    "GasTurbine_simple_CCS",
+]
 
 with open(
     path / "period1" / "node_data" / "industrial_cluster" / "Technologies.json", "w"
@@ -95,7 +99,7 @@ adopt.fill_carrier_data(
 )
 adopt.fill_carrier_data(
     path,
-    value_or_data=80,
+    value_or_data=150,
     columns=["Import price"],
     carriers=["electricity"],
     nodes=["industrial_cluster"],
@@ -114,9 +118,17 @@ adopt.fill_carrier_data(
     carriers=["clinker"],
     nodes=["industrial_cluster"],
 )
+adopt.fill_carrier_data(
+    path,
+    value_or_data=125,
+    columns=["Demand"],
+    carriers=["electricity"],
+    nodes=["industrial_cluster"],
+)
 
 
-carbon_price = np.linspace(70, 170, 8760)
+carbon_price = 500000
+carbon_price = np.ones(8760) * carbon_price
 carbon_cost_path = (
     path / "period1" / "node_data" / "industrial_cluster" / "CarbonCost.csv"
 )
