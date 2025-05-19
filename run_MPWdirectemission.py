@@ -77,9 +77,9 @@ if execute == 1:
         # change emission factor to MPW gasification direct emissions
         if nr_DD_days != 0:
             pyhub[interval].data.time_series['clustered'][
-                interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 1.349
+                interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 2.38
         pyhub[interval].data.time_series['full'][
-            interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 1.349
+            interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 2.38
 
         # Set case name
         if nr_DD_days > 0:
@@ -179,9 +179,9 @@ if execute == 1:
         # change emission factor to MPW gasification direct emissions
         if nr_DD_days != 0:
             pyhub[interval].data.time_series['clustered'][
-                interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 1.349
+                interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 2.38
         pyhub[interval].data.time_series['full'][
-            interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 1.349
+            interval, 'Chemelot', 'CarrierData', 'MPW', 'Import emission factor'] = 2.38
 
         # Set case name
         if nr_DD_days > 0:
