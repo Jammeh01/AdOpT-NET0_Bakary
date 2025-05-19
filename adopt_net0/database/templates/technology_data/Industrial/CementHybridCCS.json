@@ -3,7 +3,7 @@
   "size_min": 0,
   "size_max": 125,
   "size_is_int": 0,
-  "size_clinker_is_fixed": 1,
+  "size_clinker_is_fixed": 0,
   "decommission": 0,
   "Economics": {
     "comment": "CAPEX in EUR/tonne/hr or as a piecewise function, OPEX_variable in EUR/tonne total output, OPEX_fixed in % of CAPEX_annual",
