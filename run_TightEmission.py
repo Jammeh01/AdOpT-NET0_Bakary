@@ -8,8 +8,7 @@ from adopt_net0.utilities import fix_installed_capacities, installed_capacities_
     installed_capacities_existing_from_file
 
 #Run Chemelot cluster case brownfield
-execute = 0
-
+execute = 1
 
 if execute == 1:
     # Specify the base path to your input data
@@ -20,14 +19,14 @@ if execute == 1:
     sensitivity = 'TightEmission'
     scope3 = 1
     run_with_emission_limit = 1
-    # intervals = ['2040', '2050']
-    intervals = ['2030', '2040', '2050']
+    intervals = ['2040', '2050']
+    # intervals = ['2030', '2040', '2050']
     interval_emissionLim = {'2030': 0.75, '2040': 0.5, '2050': 0}
     nr_DD_days = 10
-    prev_from_file = 0
+    prev_from_file = 1
     emission_2030 = 522537.2155
     h5_path_prev = Path(
-        "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Brownfield/TightEmission/20250416112938_2030_minC_DD10-1/optimization_results.h5")
+        "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Brownfield/TightEmission/20250422114955_2030_tight_minC_DD10-1/optimization_results.h5")
     pyhub = {}
 
     for i, interval in enumerate(intervals):
