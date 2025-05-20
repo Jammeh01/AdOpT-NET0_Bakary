@@ -6,7 +6,7 @@ import matplotlib.font_manager as fm
 from openpyxl.reader.excel import load_workbook
 
 # --- Configurable options ---
-node = "Zeeland"
+node = "Chemelot"
 if node == "Chemelot":
     file_path = "C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long.xlsx"
 else:
