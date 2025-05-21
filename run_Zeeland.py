@@ -8,7 +8,7 @@ from adopt_net0.utilities import fix_installed_capacities, installed_capacities_
     installed_capacities_existing_from_file
 
 #Run Zeeland cluster case brownfield
-execute = 1
+execute = 0
 
 
 if execute == 1:
@@ -100,7 +100,7 @@ if execute == 1:
 
 
 #Run Zeeland cluster case greenfield
-execute = 0
+execute = 1
 
 
 if execute == 1:
@@ -112,12 +112,12 @@ if execute == 1:
     node = 'Zeeland'
     scope3 = 1
     run_with_emission_limit = 1
-    # intervals = ['2040', '2050']
-    intervals = ['2030', '2040', '2050']
+    intervals = ['2040']
+    # intervals = ['2030', '2040', '2050']
     interval_emissionLim = {'2030': 1, '2040': 0.5, '2050': 0}
     nr_DD_days = 10
-    take_prev_solution = 0
-    prev_emissions = 'no'
+    take_prev_solution = 1
+    prev_emissions = 1308190.964
     pyhub = {}
 
     for i, interval in enumerate(intervals):
