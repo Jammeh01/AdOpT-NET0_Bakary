@@ -9,7 +9,7 @@ from adopt_net0 import extract_datasets_from_h5group
 
 #options
 sensitivity = 0
-zeeland = 1
+zeeland = 0
 
 if sensitivity:
     data_to_excel_path = 'C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long_sensitivity.xlsx'
@@ -129,12 +129,55 @@ for result_type in result_types:
                                             df_nodedata[(interval, 'Chemelot', tec, 'size')].iloc[0]
                                     else:
                                         result_data.loc[output_name, (result_type, location, interval)] = 0
+
+                                    if any(tec.startswith(base) for base in ['CrackerFurnace', 'MPW2methanol', 'SteamReformer']):
+                                        tec_operation = extract_datasets_from_h5group(
+                                            hdf_file["operation/technology_operation"])
+                                        tec_operation = {k: v for k, v in tec_operation.items() if len(v) >= 8670}
+                                        df_tec_operation = pd.DataFrame(tec_operation)
+                                        if (interval, 'Chemelot', tec, 'CO2captured_output') in df_tec_operation:
+                                            numerator = df_tec_operation[
+                                                interval, 'Chemelot', tec, 'CO2captured_output'].sum()
+                                            denominator = (
+                                                    df_tec_operation[
+                                                        interval, 'Chemelot', tec, 'CO2captured_output'].sum()
+                                                    + df_tec_operation[interval, 'Chemelot', tec, 'emissions_pos'].sum()
+                                            )
+
+                                            frac_CC = numerator / denominator if (denominator > 1 and numerator > 1) else 0
+
+                                            tec_CC = tec + "_CC"
+                                            if tec_CC not in result_data.index:
+                                                result_data.loc[tec_CC] = pd.Series(dtype=float)
+                                            result_data.loc[tec_CC, (result_type, location, interval)] = frac_CC
                                 else:
                                     if (interval, location, tec, 'size') in df_nodedata.columns:
                                         result_data.loc[output_name, (result_type, location, interval)] = \
                                             df_nodedata[(interval, location, tec, 'size')].iloc[0]
                                     else:
                                         result_data.loc[output_name, (result_type, location, interval)] = 0
+
+                                    if any(tec.startswith(base) for base in ['CrackerFurnace', 'MPW2methanol', 'SteamReformer']):
+                                        tec_operation = extract_datasets_from_h5group(
+                                            hdf_file["operation/technology_operation"])
+                                        tec_operation = {k: v for k, v in tec_operation.items() if len(v) >= 8670}
+                                        df_tec_operation = pd.DataFrame(tec_operation)
+                                        if (interval, location, tec, 'CO2captured_output') in df_tec_operation:
+                                            numerator = df_tec_operation[
+                                                interval, location, tec, 'CO2captured_output'].sum()
+                                            denominator = (
+                                                    df_tec_operation[
+                                                        interval, location, tec, 'CO2captured_output'].sum()
+                                                    + df_tec_operation[interval, location, tec, 'emissions_pos'].sum()
+                                            )
+
+                                            frac_CC = numerator / denominator if (denominator > 1 and numerator > 1) else 0
+
+                                            tec_CC = "size_" + tec + "_CC"
+                                            if tec_CC not in result_data.index:
+                                                result_data.loc[tec_CC] = pd.Series(dtype=float)
+                                            result_data.loc[tec_CC, (result_type, location, interval)] = frac_CC
+
 
                             ebalance = extract_datasets_from_h5group(hdf_file["operation/energy_balance"])
                             df_ebalance = pd.DataFrame(ebalance)
