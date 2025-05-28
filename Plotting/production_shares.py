@@ -214,32 +214,27 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline")
         y_stack = np.row_stack([shares[col].values for col in available_categories])
 
     elif interpolation == "step":
-        x = np.repeat(years, 2)[1:]
-        y_stack = {}
+        extended_years = np.append(years, 2060)
+        x = np.repeat(extended_years, 2)[1:]
+
+        # Build step-wise shares and extend last value to 2060
+        step_shares = []
         for col in available_categories:
             y = shares[col].values
-            y_step = np.repeat(y, 2)[:-1]
-            y_stack[col] = y_step
+            y_extended = np.append(y, y[-1])  # repeat 2050 value for 2060
+            y_step = np.repeat(y_extended, 2)[:-1]
+            step_shares.append(y_step)
 
     else:
-        raise ValueError(f"Unsupported interpolation method: {interpolation}")
+            raise ValueError(f"Unsupported interpolation method: {interpolation}")
 
-    fig, ax = plt.subplots(figsize=(6, 3))
+    fig, ax = plt.subplots(figsize=(7, 3))
 
     if interpolation in ("spline", "linear"):
         ax.stackplot(x, y_stack, labels=available_categories,
                      colors=[categories[c] for c in available_categories])
 
     elif interpolation == "step":
-        x = np.repeat(years, 2)[1:]
-
-        # Build step-wise shares
-        step_shares = []
-        for col in available_categories:
-            y = shares[col].values
-            y_step = np.repeat(y, 2)[:-1]
-            step_shares.append(y_step)
-
         # Stack cumulatively for area plot
         bottoms = np.zeros_like(step_shares[0])
         for i, col in enumerate(available_categories):
@@ -252,8 +247,8 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline")
     ax.set_ylabel("Share of Total Production")
     ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
     ax.set_xlim(years.min(), years.max())
-    ax.set_xticks([2025, 2030, 2040, 2050])
-    ax.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$"])
+    ax.set_xticks([2025, 2030, 2040, 2050, 2060])
+    ax.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$", r"Future"])
     ax.set_ylim(0, 1)
     plt.rcParams['font.family'] = 'serif'
     plt.tight_layout()
@@ -301,7 +296,7 @@ def main():
     result_type = 'EmissionLimit Brownfield'
     location = 'Chemelot'
     product = "stacked"
-    interpolation = "linear"
+    interpolation = "step"
 
     if product == "Olefin":
         df_plot = production_sum_olefins.loc[:, (result_type, location)].copy()
