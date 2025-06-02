@@ -165,7 +165,7 @@ def plot_production_shares(df, categories):
     plt.tight_layout()
 
 
-def plot_production_shares_stacked(df1, df2, categories, interpolation="spline"):
+def plot_production_shares_stacked(df1, df2, categories, interpolation="spline", separate=1):
     def preprocess(df):
         df.columns.name = None
         df = df.T.reset_index()
@@ -176,80 +176,127 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline")
     df1 = preprocess(df1)
     df2 = preprocess(df2)
 
-    # Merge on 'Year' and sum technology columns
-    merged = df1.copy()
-    for cat in categories:
-        if cat in df2.columns and cat in df1.columns:
-            merged[cat] = df1[cat] + df2[cat]
-        elif cat in df2.columns:
-            merged[cat] = df2[cat]
-        elif cat in df1.columns:
-            merged[cat] = df1[cat]
+    all_years = sorted(set(df1['Year']) | set(df2['Year']) | {2025})
 
-    # Manually add row for Year 2025
-    if 2025 not in merged['Year'].values:
-        extra_row = {cat: 0 for cat in categories}
-        extra_row['Conventional'] = 1
-        extra_row['Year'] = 2025
-        merged = pd.concat([merged, pd.DataFrame([extra_row])], ignore_index=True)
-        merged = merged.sort_values('Year')
+    def fill_missing_years(df, years):
+        for y in years:
+            if y not in df['Year'].values:
+                row = {cat: 0 for cat in categories}
+                row['Conventional'] = 1
+                row['Year'] = y
+                df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+        return df.sort_values('Year')
 
-    years = merged['Year'].values
-    available_categories = [cat for cat in categories if cat in merged.columns]
-    df = merged[available_categories]
+    df1 = fill_missing_years(df1, all_years)
+    df2 = fill_missing_years(df2, all_years)
 
-    shares = df.div(df.sum(axis=1), axis=0)
-    x_smooth = np.linspace(years.min(), years.max(), 300)
+    def compute_shares(df):
+        df_cat = df[[c for c in categories if c in df.columns]]
+        return df_cat.div(df_cat.sum(axis=1), axis=0)
 
-    if interpolation == "spline":
-        x = np.linspace(years.min(), years.max(), 300)
-        interpolated = {}
-        for col in available_categories:
-            spline = make_interp_spline(years, shares[col], k=2)
-            interpolated[col] = spline(x)
-        y_stack = np.row_stack([interpolated[col] for col in available_categories])
+    def interpolate(df, years):
+        shares = compute_shares(df)
+        if interpolation == "spline":
+            x = np.linspace(min(years), max(years), 300)
+            interpolated = {
+                col: make_interp_spline(years, shares[col], k=2)(x)
+                for col in shares.columns
+            }
+        elif interpolation == "linear":
+            x = np.array(years)
+            interpolated = {
+                col: np.interp(x, years, shares[col])
+                for col in shares.columns
+            }
+        elif interpolation == "step":
+            interpolated = {}
 
-    elif interpolation == "linear":
-        x = years
-        y_stack = np.row_stack([shares[col].values for col in available_categories])
+            x = []
+            for i, year in enumerate(years):
+                if i == 0:
+                    x.append(year)
+                else:
+                    x.extend([year - 1, year])
+            x.append(2060)  # Add final point
+            x = np.array(x)
 
-    elif interpolation == "step":
-        extended_years = np.append(years, 2060)
-        x = np.repeat(extended_years, 2)[1:]
+            for col in shares.columns:
+                y = np.append(shares[col].values, shares[col].values[-1])
+                y_step = np.repeat(y, 2)[:-1]
 
-        # Build step-wise shares and extend last value to 2060
-        step_shares = []
-        for col in available_categories:
-            y = shares[col].values
-            y_extended = np.append(y, y[-1])  # repeat 2050 value for 2060
-            y_step = np.repeat(y_extended, 2)[:-1]
-            step_shares.append(y_step)
+                # Trim or pad y_step to match x
+                if len(y_step) > len(x):
+                    y_step = y_step[:len(x)]
+                elif len(y_step) < len(x):
+                    y_step = np.append(y_step, [y_step[-1]] * (len(x) - len(y_step)))
 
-    else:
+                y_interp = y_step.copy()
+
+                for i in range(1, len(x), 2):
+                    if x[i] - x[i - 1] == 1:
+                        y0, y1 = y_step[i - 1], y_step[i]
+                        t = np.linspace(0, 1, 2)
+                        spline = make_interp_spline(t, [y0, y1], k=2)
+                        y_interp[i - 1] = spline(0)
+                        y_interp[i] = spline(1)
+
+                interpolated[col] = y_interp
+
+        else:
             raise ValueError(f"Unsupported interpolation method: {interpolation}")
 
-    fig, ax = plt.subplots(figsize=(7, 3))
+        return x, interpolated
 
-    if interpolation in ("spline", "linear"):
-        ax.stackplot(x, y_stack, labels=available_categories,
-                     colors=[categories[c] for c in available_categories])
+    if separate == 1:
+        fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(7, 6), sharex=True,
+                                       gridspec_kw={'hspace': 0.08}
+                                       )
 
-    elif interpolation == "step":
-        # Stack cumulatively for area plot
-        bottoms = np.zeros_like(step_shares[0])
-        for i, col in enumerate(available_categories):
-            top = bottoms + step_shares[i]
-            ax.fill_between(x, bottoms, top, step='post',
-                            color=categories[col], label=col)
-            bottoms = top
+        for ax, df, label in zip((ax1, ax2), (df1, df2), ('Ammonia', 'Ethylene')):
+            x, interpolated = interpolate(df, df['Year'].values)
+            bottoms = np.zeros_like(x)
+            for cat in categories:
+                if cat in interpolated:
+                    top = bottoms + interpolated[cat]
+                    ax.fill_between(x, bottoms, top, color=categories[cat], label=cat)
+                    bottoms = top
+            ax.set_ylim(0, 1)
+            ax.set_ylabel(f"Share of {label}")
 
-    #Layout
-    ax.set_ylabel("Share of Total Production")
-    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    ax.set_xlim(years.min(), years.max())
-    ax.set_xticks([2025, 2030, 2040, 2050, 2060])
-    ax.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$", r"Future"])
-    ax.set_ylim(0, 1)
+        ax2.set_xticks([2025, 2030, 2040, 2050, 2060])
+        ax2.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$", r"Future"])
+        ax2.set_xlim(x.min(), x.max())
+
+        # Combine legend from both axes
+        handles, labels = ax2.get_legend_handles_labels()
+        fig.legend(handles, labels,
+                   loc='lower center',
+                   bbox_to_anchor=(0.5, 0),
+                   ncol=3)
+        plt.subplots_adjust(bottom=0.2)
+
+    else:
+        # Merge and plot together
+        merged = df1.copy()
+        for cat in categories:
+            merged[cat] = df1.get(cat, 0) + df2.get(cat, 0)
+        merged = fill_missing_years(merged, all_years)
+        x, interpolated = interpolate(merged, merged['Year'].values)
+
+        fig, ax1 = plt.subplots(figsize=(7, 3))
+        bottoms = np.zeros_like(x)
+        for cat in categories:
+            if cat in interpolated:
+                top = bottoms + interpolated[cat]
+                ax1.fill_between(x, bottoms, top, color=categories[cat], label=cat)
+                bottoms = top
+        ax1.set_ylabel("Share of Total Production")
+        ax1.set_ylim(0, 1)
+        ax1.set_xticks([2025, 2030, 2040, 2050, 2060])
+        ax1.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$", r"Future"])
+        ax1.legend(loc='upper left', bbox_to_anchor=(1, 1))
+        ax1.set_title("Combined Production Shares")
+
     plt.rcParams['font.family'] = 'serif'
     plt.tight_layout()
 
@@ -297,6 +344,7 @@ def main():
     location = 'Chemelot'
     product = "stacked"
     interpolation = "step"
+    separate = 1
 
     if product == "Olefin":
         df_plot = production_sum_olefins.loc[:, (result_type, location)].copy()
@@ -307,7 +355,8 @@ def main():
     elif product == 'stacked':
         df_plot_olefin = production_sum_olefins.loc[:, (result_type, location)].copy()
         df_plot_ammonia = production_sum_ammonia.loc[:, (result_type, location)].copy()
-        plot_production_shares_stacked(df_plot_ammonia, df_plot_olefin, categories, interpolation=interpolation)
+        plot_production_shares_stacked(df_plot_ammonia, df_plot_olefin, categories, interpolation=interpolation,
+                                       separate=separate)
 
     #Make the plots
     ext_map = {'Brownfield': '_bf', 'Greenfield': '_gf'}
