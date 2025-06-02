@@ -4,7 +4,7 @@ import os
 
 from openpyxl.reader.excel import load_workbook
 
-execute = 0
+execute = 1
 
 if execute:
     # Load the Excel file
@@ -230,6 +230,7 @@ if execute:
         "\\centering\n"
         "\\caption{Installed capacities for Greenfield and Brownfield scenarios including Scope 1 and 2 emissions for "
         "the short, mid, and long-term interval}\n"
+        "\\label{tab:results_emission_scope}\n"
         "\\begin{adjustbox}{angle=90, max width=\\textheight}"
         + df_emission_scope.to_latex(index=False, escape=False, column_format="lccccccccccccc").replace(r'\multicolumn{3}{r}{', r'\multicolumn{3}{c}{')
         + "\end{adjustbox}"
@@ -302,8 +303,12 @@ if execute:
     with open(os.path.join(output_dir, "filtered_data_import_combined.tex"), "w") as f:
         f.write(latex_table_import_combined)
 
+    import_combined_excel_path = os.path.join(output_dir, "filtered_data_import_combined.xlsx")
+    df_import_combined = import_combined.reset_index(drop=True)
+    df_import_combined.to_excel(import_combined_excel_path, index=True, merge_cells=True)
+
 #latex tables sensitivity
-execute = 1
+execute = 0
 
 if execute:
     # Load the Excel file

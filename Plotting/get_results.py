@@ -10,6 +10,7 @@ from adopt_net0 import extract_datasets_from_h5group
 #options
 sensitivity = 0
 zeeland = 0
+delayed = 1
 
 if sensitivity:
     data_to_excel_path = 'C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long_sensitivity.xlsx'
@@ -17,6 +18,9 @@ if sensitivity:
 elif zeeland:
     data_to_excel_path = 'C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long_Zeeland.xlsx'
     result_types = ['EmissionLimit Greenfield', 'EmissionLimit Brownfield']  # Add multiple result types
+elif delayed:
+    data_to_excel_path = 'C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long_delayed.xlsx'
+    result_types = ['EmissionLimit Brownfield']  # Add multiple result types
 else:
     data_to_excel_path = 'C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long.xlsx'
     result_types = ['EmissionLimit Greenfield', 'EmissionLimit Brownfield', 'EmissionScope Greenfield',
@@ -45,6 +49,15 @@ for result_type in result_types:
                 [str(result_type)],
                 ["Zeeland"],
                 ["2030", "2040", "2050"]
+            ],
+            names=["Resulttype", "Location", "Interval"]
+        )
+    elif delayed:
+        columns = pd.MultiIndex.from_product(
+            [
+                [str(result_type)],
+                ["Chemelot_delayed"],
+                ["2040", "2050-1", "2050-2"]
             ],
             names=["Resulttype", "Location", "Interval"]
         )
@@ -95,22 +108,32 @@ for result_type in result_types:
 
                     #Calculate sunk costs and cumulative costs for brownfield
                     if 'Brownfield' in result_type:
-                        prev_interval = result_data.columns.levels[2][i - 1]
-                        if interval == '2030':
-                            result_data.loc["costs_tot_interval", (result_type, location, interval)] = \
-                                summary_results.loc[summary_results['case'] == case, 'total_npv'].iloc[0]
-                        if interval == '2040':
-                            result_data.loc["sunk_costs", (result_type, location, interval)] = tec_costs[prev_interval]
-                            result_data.loc["costs_tot_interval", (result_type, location, interval)] = tec_costs[prev_interval] + \
-                                summary_results.loc[summary_results['case'] == case, 'total_npv'].iloc[0]
-                        if interval == '2050':
-                            first_interval = result_data.columns.levels[2][i - 2]
-                            result_data.loc["sunk_costs", (result_type, location, interval)] = tec_costs[
-                                prev_interval] + tec_costs[first_interval]
-                            result_data.loc["costs_tot_interval", (result_type, location, interval)] = tec_costs[prev_interval] + \
-                                + tec_costs[first_interval] + summary_results.loc[summary_results['case'] == case, 'total_npv'].iloc[0]
-                            result_data.loc["costs_tot_cumulative", (result_type, location, interval)] = sum(
-                                total_costs.values()) * 10 + tec_costs[prev_interval] * 10 + tec_costs[first_interval] * 10
+                        if not delayed:
+                            prev_interval = result_data.columns.levels[2][i - 1]
+                            if interval == '2030':
+                                result_data.loc["costs_tot_interval", (result_type, location, interval)] = \
+                                    summary_results.loc[summary_results['case'] == case, 'total_npv'].iloc[0]
+                            if interval == '2040':
+                                result_data.loc["sunk_costs", (result_type, location, interval)] = tec_costs[prev_interval]
+                                result_data.loc["costs_tot_interval", (result_type, location, interval)] = tec_costs[prev_interval] + \
+                                    summary_results.loc[summary_results['case'] == case, 'total_npv'].iloc[0]
+                            if interval == '2050':
+                                first_interval = result_data.columns.levels[2][i - 2]
+                                result_data.loc["sunk_costs", (result_type, location, interval)] = tec_costs[
+                                    prev_interval] + tec_costs[first_interval]
+                                result_data.loc["costs_tot_interval", (result_type, location, interval)] = tec_costs[prev_interval] + \
+                                    + tec_costs[first_interval] + summary_results.loc[summary_results['case'] == case, 'total_npv'].iloc[0]
+                                result_data.loc["costs_tot_cumulative", (result_type, location, interval)] = sum(
+                                    total_costs.values()) * 10 + tec_costs[prev_interval] * 10 + tec_costs[first_interval] * 10
+                        else:
+                            if interval == '2050-1':
+                                prev_interval = '2040'
+                                result_data.loc["sunk_costs", (result_type, location, interval)] = tec_costs[
+                                    prev_interval]
+                                result_data.loc["costs_tot_interval", (result_type, location, interval)] = tec_costs[prev_interval] + \
+                                    + summary_results.loc[summary_results['case'] == case, 'total_npv'].iloc[0]
+                                result_data.loc["costs_tot_cumulative", (result_type, location, interval)] = sum(
+                                    total_costs.values()) * 10 + tec_costs[prev_interval] * 10
 
                     # Calculate total cumulative costs for Greenfield
                     if 'Greenfield' in result_type:
@@ -121,93 +144,64 @@ for result_type in result_types:
                             nodedata = extract_datasets_from_h5group(hdf_file["design/nodes"])
                             df_nodedata = pd.DataFrame(nodedata)
 
+                            if delayed:
+                                location_data = 'Chemelot'
+                                if interval == "2050-1" or interval == "2050-2":
+                                    interval_data = "2050"
+                                else:
+                                    interval_data = interval
+                            elif sensitivity:
+                                location_data = 'Chemelot'
+                                interval_data = interval
+                            else:
+                                location_data = location
+                                interval_data = interval
+
                             for tec in df_nodedata.columns.levels[2]:
                                 output_name = f'size_{tec}'
-                                if sensitivity:
-                                    if (interval, 'Chemelot', tec, 'size') in df_nodedata.columns:
-                                        result_data.loc[output_name, (result_type, location, interval)] = \
-                                            df_nodedata[(interval, 'Chemelot', tec, 'size')].iloc[0]
-                                    else:
-                                        result_data.loc[output_name, (result_type, location, interval)] = 0
-
-                                    if any(tec.startswith(base) for base in ['CrackerFurnace', 'MPW2methanol', 'SteamReformer']):
-                                        tec_operation = extract_datasets_from_h5group(
-                                            hdf_file["operation/technology_operation"])
-                                        tec_operation = {k: v for k, v in tec_operation.items() if len(v) >= 8670}
-                                        df_tec_operation = pd.DataFrame(tec_operation)
-                                        if (interval, 'Chemelot', tec, 'CO2captured_output') in df_tec_operation:
-                                            numerator = df_tec_operation[
-                                                interval, 'Chemelot', tec, 'CO2captured_output'].sum()
-                                            denominator = (
-                                                    df_tec_operation[
-                                                        interval, 'Chemelot', tec, 'CO2captured_output'].sum()
-                                                    + df_tec_operation[interval, 'Chemelot', tec, 'emissions_pos'].sum()
-                                            )
-
-                                            frac_CC = numerator / denominator if (denominator > 1 and numerator > 1) else 0
-
-                                            tec_CC = tec + "_CC"
-                                            if tec_CC not in result_data.index:
-                                                result_data.loc[tec_CC] = pd.Series(dtype=float)
-                                            result_data.loc[tec_CC, (result_type, location, interval)] = frac_CC
+                                if (interval_data, location_data, tec, 'size') in df_nodedata.columns:
+                                    result_data.loc[output_name, (result_type, location, interval)] = \
+                                        df_nodedata[(interval_data, location_data, tec, 'size')].iloc[0]
                                 else:
-                                    if (interval, location, tec, 'size') in df_nodedata.columns:
-                                        result_data.loc[output_name, (result_type, location, interval)] = \
-                                            df_nodedata[(interval, location, tec, 'size')].iloc[0]
-                                    else:
-                                        result_data.loc[output_name, (result_type, location, interval)] = 0
+                                    result_data.loc[output_name, (result_type, location, interval)] = 0
 
-                                    if any(tec.startswith(base) for base in ['CrackerFurnace', 'MPW2methanol', 'SteamReformer']):
-                                        tec_operation = extract_datasets_from_h5group(
-                                            hdf_file["operation/technology_operation"])
-                                        tec_operation = {k: v for k, v in tec_operation.items() if len(v) >= 8670}
-                                        df_tec_operation = pd.DataFrame(tec_operation)
-                                        if (interval, location, tec, 'CO2captured_output') in df_tec_operation:
-                                            numerator = df_tec_operation[
-                                                interval, location, tec, 'CO2captured_output'].sum()
-                                            denominator = (
-                                                    df_tec_operation[
-                                                        interval, location, tec, 'CO2captured_output'].sum()
-                                                    + df_tec_operation[interval, location, tec, 'emissions_pos'].sum()
-                                            )
+                                if any(tec.startswith(base) for base in ['CrackerFurnace', 'MPW2methanol', 'SteamReformer']):
+                                    tec_operation = extract_datasets_from_h5group(
+                                        hdf_file["operation/technology_operation"])
+                                    tec_operation = {k: v for k, v in tec_operation.items() if len(v) >= 8670}
+                                    df_tec_operation = pd.DataFrame(tec_operation)
+                                    if (interval_data, location_data, tec, 'CO2captured_output') in df_tec_operation:
+                                        numerator = df_tec_operation[
+                                            interval_data, location_data, tec, 'CO2captured_output'].sum()
+                                        denominator = (
+                                                df_tec_operation[
+                                                    interval_data, location_data, tec, 'CO2captured_output'].sum()
+                                                + df_tec_operation[interval_data, location_data, tec, 'emissions_pos'].sum()
+                                        )
 
-                                            frac_CC = numerator / denominator if (denominator > 1 and numerator > 1) else 0
+                                        frac_CC = numerator / denominator if (denominator > 1 and numerator > 1) else 0
 
-                                            tec_CC = "size_" + tec + "_CC"
-                                            if tec_CC not in result_data.index:
-                                                result_data.loc[tec_CC] = pd.Series(dtype=float)
-                                            result_data.loc[tec_CC, (result_type, location, interval)] = frac_CC
+                                        tec_CC = "size_" + tec + "_CC"
+                                        if tec_CC not in result_data.index:
+                                            result_data.loc[tec_CC] = pd.Series(dtype=float)
+                                        result_data.loc[tec_CC, (result_type, location, interval)] = frac_CC
 
 
                             ebalance = extract_datasets_from_h5group(hdf_file["operation/energy_balance"])
                             df_ebalance = pd.DataFrame(ebalance)
-                            if sensitivity:
-                                cars_at_node = df_ebalance[interval, 'Chemelot'].columns.droplevel([1]).unique()
+                            cars_at_node = df_ebalance[interval_data, location_data].columns.droplevel([1]).unique()
 
-                                for car in cars_at_node:
-                                    parameters = ["import", "export"]
-                                    for para in parameters:
-                                        output_name = f"{car}/{para}_max"
-                                        if (interval, 'Chemelot', car, para) in df_ebalance.columns:
-                                            car_output = df_ebalance[interval, 'Chemelot', car, para]
-                                            result_data.loc[output_name, (result_type, location, interval)] = max(
-                                                car_output)
-                                        else:
-                                            result_data.loc[output_name, (result_type, location, interval)] = 0
+                            for car in cars_at_node:
+                                parameters = ["import", "export"]
+                                for para in parameters:
+                                    output_name = f"{car}/{para}_max"
+                                    if (interval_data, location_data, car, para) in df_ebalance.columns:
+                                        car_output = df_ebalance[interval_data, location_data, car, para]
+                                        result_data.loc[output_name, (result_type, location, interval)] = max(
+                                            car_output)
+                                    else:
+                                        result_data.loc[output_name, (result_type, location, interval)] = 0
 
-                            else:
-                                cars_at_node = df_ebalance[interval, location].columns.droplevel([1]).unique()
-
-                                for car in cars_at_node:
-                                    parameters = ["import", "export"]
-                                    for para in parameters:
-                                        output_name = f"{car}/{para}_max"
-                                        if (interval, location, car, para) in df_ebalance.columns:
-                                            car_output = df_ebalance[interval, location, car, para]
-                                            result_data.loc[output_name, (result_type, location, interval)] = max(
-                                                car_output)
-                                        else:
-                                            result_data.loc[output_name, (result_type, location, interval)] = 0
 
     # Store results for this result_type
     all_results.append(result_data)

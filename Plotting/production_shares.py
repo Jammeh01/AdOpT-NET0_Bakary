@@ -47,10 +47,12 @@ def fetch_and_process_data_production(resultfolder, data_to_excel_path_olefins, 
             for interval in result_data.columns.levels[2]:
                 for case in summary_results['case']:
                     if pd.notna(case) and interval in case:
-                        h5_path = Path(summary_results[summary_results['case'] == case].iloc[0]['time_stamp']) / "optimization_results.h5"
+                        h5_path = Path(summary_results[summary_results['case'] == case].iloc[0][
+                                           'time_stamp']) / "optimization_results.h5"
                         if h5_path.exists():
                             with h5py.File(h5_path, "r") as hdf_file:
-                                tec_operation = extract_datasets_from_h5group(hdf_file["operation/technology_operation"])
+                                tec_operation = extract_datasets_from_h5group(
+                                    hdf_file["operation/technology_operation"])
                                 tec_operation = {k: v for k, v in tec_operation.items() if len(v) >= 8670}
                                 df_tec_operation = pd.DataFrame(tec_operation)
 
@@ -70,11 +72,13 @@ def fetch_and_process_data_production(resultfolder, data_to_excel_path_olefins, 
                                             )
 
                                             frac_CC = numerator / denominator if (
-                                                        denominator > 1 and numerator > 1) else 0
+                                                    denominator > 1 and numerator > 1) else 0
 
                                             tec_CC = tec + "_CC"
-                                            result_data.loc[tec, (result_type, location, interval)] = sum(output_car) * (1 - frac_CC)
-                                            result_data.loc[tec_CC, (result_type, location, interval)] = sum(output_car) * frac_CC
+                                            result_data.loc[tec, (result_type, location, interval)] = sum(
+                                                output_car) * (1 - frac_CC)
+                                            result_data.loc[tec_CC, (result_type, location, interval)] = sum(
+                                                output_car) * frac_CC
                                         else:
                                             result_data.loc[tec, (result_type, location, interval)] = sum(output_car)
 
@@ -83,31 +87,39 @@ def fetch_and_process_data_production(resultfolder, data_to_excel_path_olefins, 
                                         output_car = df_tec_operation[interval, location, tec_existing, para]
 
                                         if tec in ['CrackerFurnace', 'MPW2methanol', 'SteamReformer'] and (
-                                                interval, location, tec_existing, 'CO2captured_output') in df_tec_operation:
+                                                interval, location, tec_existing,
+                                                'CO2captured_output') in df_tec_operation:
                                             numerator = df_tec_operation[
                                                 interval, location, tec_existing, 'CO2captured_output'].sum()
                                             denominator = (
                                                     df_tec_operation[
                                                         interval, location, tec_existing, 'CO2captured_output'].sum()
-                                                    + df_tec_operation[interval, location, tec_existing, 'emissions_pos'].sum()
+                                                    + df_tec_operation[
+                                                        interval, location, tec_existing, 'emissions_pos'].sum()
                                             )
 
                                             frac_CC = numerator / denominator if (
-                                                        denominator > 1 and numerator > 1) else 0
+                                                    denominator > 1 and numerator > 1) else 0
 
                                             tec_CC = tec + "_CC"
-                                            result_data.loc[tec, (result_type, location, interval)] += sum(output_car) * (1 - frac_CC)
-                                            result_data.loc[tec_CC, (result_type, location, interval)] += sum(output_car) * frac_CC
+                                            result_data.loc[tec, (result_type, location, interval)] += sum(
+                                                output_car) * (1 - frac_CC)
+                                            result_data.loc[tec_CC, (result_type, location, interval)] += sum(
+                                                output_car) * frac_CC
                                         else:
                                             result_data.loc[tec, (result_type, location, interval)] += sum(output_car)
 
                             for tec in tec_mapping.keys():
                                 if tec_mapping[tec][0] == 'Olefin':
-                                    olefin_production = result_data.loc[tec, (result_type, location, interval)] * tec_mapping[tec][3]
-                                    production_sum_olefins.loc[tec_mapping[tec][1], (result_type, location, interval)] += olefin_production
+                                    olefin_production = result_data.loc[tec, (result_type, location, interval)] * \
+                                                        tec_mapping[tec][3]
+                                    production_sum_olefins.loc[
+                                        tec_mapping[tec][1], (result_type, location, interval)] += olefin_production
                                 elif tec_mapping[tec][0] == 'Ammonia':
-                                    ammonia_production = result_data.loc[tec, (result_type, location, interval)] * tec_mapping[tec][3]
-                                    production_sum_ammonia.loc[tec_mapping[tec][1], (result_type, location, interval)] += ammonia_production
+                                    ammonia_production = result_data.loc[tec, (result_type, location, interval)] * \
+                                                         tec_mapping[tec][3]
+                                    production_sum_ammonia.loc[
+                                        tec_mapping[tec][1], (result_type, location, interval)] += ammonia_production
 
         all_results.append(result_data)
         olefin_results.append(production_sum_olefins)
@@ -120,8 +132,10 @@ def fetch_and_process_data_production(resultfolder, data_to_excel_path_olefins, 
 
 
 def plot_production_shares(df, categories):
-    if df.index.name == 'Year':
-        df = df.reset_index()
+    df.columns.name = None
+    df = df.T.reset_index()
+    df = df.rename(columns={'index': 'Year'})
+    df['Year'] = df['Year'].astype(int)
 
     years = df['Year'].values
     available_categories = [cat for cat in categories if cat in df.columns]
@@ -149,7 +163,95 @@ def plot_production_shares(df, categories):
     ax.set_ylim(0, 1)
     plt.rcParams['font.family'] = 'serif'
     plt.tight_layout()
-    plt.show()
+
+
+def plot_production_shares_stacked(df1, df2, categories, interpolation="spline"):
+    def preprocess(df):
+        df.columns.name = None
+        df = df.T.reset_index()
+        df = df.rename(columns={'index': 'Year'})
+        df['Year'] = df['Year'].astype(int)
+        return df
+
+    df1 = preprocess(df1)
+    df2 = preprocess(df2)
+
+    # Merge on 'Year' and sum technology columns
+    merged = df1.copy()
+    for cat in categories:
+        if cat in df2.columns and cat in df1.columns:
+            merged[cat] = df1[cat] + df2[cat]
+        elif cat in df2.columns:
+            merged[cat] = df2[cat]
+        elif cat in df1.columns:
+            merged[cat] = df1[cat]
+
+    # Manually add row for Year 2025
+    if 2025 not in merged['Year'].values:
+        extra_row = {cat: 0 for cat in categories}
+        extra_row['Conventional'] = 1
+        extra_row['Year'] = 2025
+        merged = pd.concat([merged, pd.DataFrame([extra_row])], ignore_index=True)
+        merged = merged.sort_values('Year')
+
+    years = merged['Year'].values
+    available_categories = [cat for cat in categories if cat in merged.columns]
+    df = merged[available_categories]
+
+    shares = df.div(df.sum(axis=1), axis=0)
+    x_smooth = np.linspace(years.min(), years.max(), 300)
+
+    if interpolation == "spline":
+        x = np.linspace(years.min(), years.max(), 300)
+        interpolated = {}
+        for col in available_categories:
+            spline = make_interp_spline(years, shares[col], k=2)
+            interpolated[col] = spline(x)
+        y_stack = np.row_stack([interpolated[col] for col in available_categories])
+
+    elif interpolation == "linear":
+        x = years
+        y_stack = np.row_stack([shares[col].values for col in available_categories])
+
+    elif interpolation == "step":
+        extended_years = np.append(years, 2060)
+        x = np.repeat(extended_years, 2)[1:]
+
+        # Build step-wise shares and extend last value to 2060
+        step_shares = []
+        for col in available_categories:
+            y = shares[col].values
+            y_extended = np.append(y, y[-1])  # repeat 2050 value for 2060
+            y_step = np.repeat(y_extended, 2)[:-1]
+            step_shares.append(y_step)
+
+    else:
+            raise ValueError(f"Unsupported interpolation method: {interpolation}")
+
+    fig, ax = plt.subplots(figsize=(7, 3))
+
+    if interpolation in ("spline", "linear"):
+        ax.stackplot(x, y_stack, labels=available_categories,
+                     colors=[categories[c] for c in available_categories])
+
+    elif interpolation == "step":
+        # Stack cumulatively for area plot
+        bottoms = np.zeros_like(step_shares[0])
+        for i, col in enumerate(available_categories):
+            top = bottoms + step_shares[i]
+            ax.fill_between(x, bottoms, top, step='post',
+                            color=categories[col], label=col)
+            bottoms = top
+
+    #Layout
+    ax.set_ylabel("Share of Total Production")
+    ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    ax.set_xlim(years.min(), years.max())
+    ax.set_xticks([2025, 2030, 2040, 2050, 2060])
+    ax.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$", r"Future"])
+    ax.set_ylim(0, 1)
+    plt.rcParams['font.family'] = 'serif'
+    plt.tight_layout()
 
 
 def main():
@@ -191,27 +293,26 @@ def main():
     production_sum_olefins = pd.read_excel(DATA_TO_EXCEL_PATH1, index_col=0, header=[0, 1, 2])
     production_sum_ammonia = pd.read_excel(DATA_TO_EXCEL_PATH2, index_col=0, header=[0, 1, 2])
 
-    result_type = 'EmissionLimit Greenfield'
+    result_type = 'EmissionLimit Brownfield'
     location = 'Chemelot'
-    product = "Olefin"
+    product = "stacked"
+    interpolation = "step"
 
     if product == "Olefin":
         df_plot = production_sum_olefins.loc[:, (result_type, location)].copy()
+        plot_production_shares(df_plot, categories)
     elif product == 'Ammonia':
         df_plot = production_sum_ammonia.loc[:, (result_type, location)].copy()
-
-
-    df_plot.columns.name = None
-    df_plot = df_plot.T.reset_index()
-    df_plot = df_plot.rename(columns={'level_0': 'Year'})
-    df_plot['Year'] = df_plot['index'].astype(int)
-
-    plot_production_shares(df_plot, categories)
+        plot_production_shares(df_plot, categories)
+    elif product == 'stacked':
+        df_plot_olefin = production_sum_olefins.loc[:, (result_type, location)].copy()
+        df_plot_ammonia = production_sum_ammonia.loc[:, (result_type, location)].copy()
+        plot_production_shares_stacked(df_plot_ammonia, df_plot_olefin, categories, interpolation=interpolation)
 
     #Make the plots
     ext_map = {'Brownfield': '_bf', 'Greenfield': '_gf'}
     ext = next((v for k, v in ext_map.items() if k in result_type), '')
-    filename = f'production_share_{product}{ext}'
+    filename = f'production_share_{interpolation}{ext}'
 
     saveas = 'pdf'
     if saveas == 'svg':
@@ -226,8 +327,8 @@ def main():
         savepath = f'C:/Users/5637635/Documents/OneDrive - Universiteit Utrecht/Research/Multiyear Modeling/MY_Plots/{filename}.svg'
         plt.savefig(savepath, format='svg')
 
+    plt.show()
 
 
 if __name__ == "__main__":
     main()
-
