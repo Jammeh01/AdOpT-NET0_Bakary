@@ -10,10 +10,10 @@ metric = "costs"       # Choose: "costs" or "emissions"
 scale_type = "per_tonne"   # Choose: "total" or "per_tonne"
 saveas = 'pdf'  # Options: "no", "svg", "pdf", "both"
 filename = 'TC_baseline_' + metric + '_' + scale_type
-delayed = 1
+delayed = 0
 stacked = 0
 
-node = "Chemelot"
+node = "Zeeland"
 if node == "Chemelot":
     file_path = "C:/EHubversions/AdOpT-NET0_Julia/Plotting/result_data_long.xlsx"
     if delayed:
