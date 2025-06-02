@@ -132,6 +132,8 @@ def fetch_and_process_data_production(resultfolder, data_to_excel_path_olefins, 
 
 
 def plot_production_shares(df, categories):
+    plt.rcParams['font.family'] = 'serif'
+
     df.columns.name = None
     df = df.T.reset_index()
     df = df.rename(columns={'index': 'Year'})
@@ -166,6 +168,7 @@ def plot_production_shares(df, categories):
 
 
 def plot_production_shares_stacked(df1, df2, categories, interpolation="spline", separate=1):
+    plt.rcParams['font.family'] = 'serif'
     def preprocess(df):
         df.columns.name = None
         df = df.T.reset_index()
@@ -217,7 +220,7 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline",
                     x.append(year)
                 else:
                     x.extend([year - 1, year])
-            x.append(2060)  # Add final point
+            x.append(2055)  # Add final point
             x = np.array(x)
 
             for col in shares.columns:
@@ -252,7 +255,7 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline",
                                        gridspec_kw={'hspace': 0.08}
                                        )
 
-        for ax, df, label in zip((ax1, ax2), (df1, df2), ('Ammonia', 'Ethylene')):
+        for ax, df, label in zip((ax1, ax2), (df1, df2), ('ammonia', 'ethylene')):
             x, interpolated = interpolate(df, df['Year'].values)
             bottoms = np.zeros_like(x)
             for cat in categories:
@@ -263,8 +266,8 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline",
             ax.set_ylim(0, 1)
             ax.set_ylabel(f"Share of {label}")
 
-        ax2.set_xticks([2025, 2030, 2040, 2050, 2060])
-        ax2.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$", r"Future"])
+        ax2.set_xticks([2025, 2030, 2040, 2050, 2055])
+        ax2.set_xticklabels([r"Current", 2030, 2040, 2050, r"Post 2050"])
         ax2.set_xlim(x.min(), x.max())
 
         # Combine legend from both axes
@@ -292,8 +295,8 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline",
                 bottoms = top
         ax1.set_ylabel("Share of Total Production")
         ax1.set_ylim(0, 1)
-        ax1.set_xticks([2025, 2030, 2040, 2050, 2060])
-        ax1.set_xticklabels([r"Current", r"$2030$", r"$2040$", r"$2050$", r"Future"])
+        ax1.set_xticks([2025, 2030, 2040, 2050, 2055])
+        ax1.set_xticklabels([r"Current", 2030, 2040, 2050, r"Post 2050"])
         ax1.legend(loc='upper left', bbox_to_anchor=(1, 1))
         ax1.set_title("Combined Production Shares")
 
@@ -311,7 +314,7 @@ def main():
         "SteamReformer": ("Ammonia", "Conventional", "HBfeed", 0.168),
         "SteamReformer_CC": ("Ammonia", "Carbon Capture", "HBfeed", 0.168),
         "WGS_m": ("Ammonia", "Electrification", "hydrogen", 0.168),
-        "AEC": ("Ammonia", "Electrification", "hydrogen", 0.168),
+        "AEC": ("Ammonia", "Water electrolysis", "hydrogen", 0.168),
         "RWGS": ("Olefin", r"CO$_2$ utilization", "syngas", 0.270),
         "DirectMeOHsynthesis": ("Olefins", r"CO$_2$ utilization", "methanol", 0.328),
         "EDH": ("Olefin", "Bio-based feedstock", "ethylene", 1),
@@ -323,8 +326,9 @@ def main():
 
     categories = {
         "Conventional": '#8C8B8B',
-        "Carbon Capture": '#3E7EB0',
-        "Electrification": '#EDD253',
+        # "Carbon Capture": '#3E7EB0',
+        "Electrification": '#E9E46D',
+        "Water electrolysis": '#EABF37',
         r"CO$_2$ utilization": '#E18826',
         "Bio-based feedstock": '#84AA6F',
         "Plastic waste recycling": '#B475B2',
