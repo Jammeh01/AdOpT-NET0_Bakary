@@ -4,16 +4,17 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from matplotlib.ticker import PercentFormatter
 from adopt_net0 import extract_datasets_from_h5group
+from matplotlib import gridspec
 
 # Define the data path
-run_for = 'bf'
+run_for = 'gf'
 interval = '2030'
 resultfolder = "Z:/AdOpt_NET0/AdOpt_results/MY/DesignDays/CH_2030_" + run_for
 
 # Define reference case ('fullres' or 'DD..' and technologies
 # tecs = ['AEC', 'MTO', 'Storage_Ammonia']
 tecs = ['AEC']
-reference_case = 'fullres'
+reference_case = 'DD10'
 
 # Extract the relevant data
 summarypath = Path(resultfolder) / 'Summary.xlsx'
@@ -91,53 +92,77 @@ markers = ['o', '*', 'D', '^']
 # Choose the plot type: 'diff' for percentage differences, 'absolute' for absolute values
 plot_type = 'diff'  # Can be changed to 'diff' and 'absolute'
 
-# Create a new figure
-fig, ax1 = plt.subplots(figsize=(5, 4))
+# Create figure with broken y-axis layout
+fig = plt.figure(figsize=(5, 4))
+gs = gridspec.GridSpec(2, 1, height_ratios=[1, 2], hspace=0.05)  # Top (large y), bottom (normal y)
+ax2 = fig.add_subplot(gs[0])  # Top subplot for high values
+ax1 = fig.add_subplot(gs[1], sharex=ax2)  # Bottom subplot for low values
 
-# Scatter plots for differences (left y-axis in %)
+# Plot scatter points on both axes
 for i, column in enumerate(columns_of_interest):
-    if plot_type == 'diff' or (plot_type == 'absolute' and column != 'computation time'):  # Only the other columns get percentage differences
+    if plot_type == 'diff' or (plot_type == 'absolute' and column != 'computation time'):
         for tec in tecs:
             label = f'Size Difference {tec}' if column == f'size_{tec}' else f'{column.capitalize()} Difference'
-            ax1.scatter(clustered_results['DD'], clustered_results[f'{column}_diff'], color=colors[i], label=label, marker=markers[i])
+            y_data = clustered_results[f'{column}_diff']
+            x_data = clustered_results['DD']
+            ax1.scatter(x_data, y_data, color=colors[i], label=label, marker=markers[i])
+            ax2.scatter(x_data, y_data, color=colors[i], marker=markers[i])
 
-# Set labels for the left y-axis (percentage)
-ax1.set_xlabel('Number of Design Days')
-ax1.set_ylabel('Difference with Full Resolution')
+# Set y-limits for broken axis
+ax1.set_ylim(-100, 500)      # Bottom axis
+ax2.set_ylim(2550, 2800)     # Top axis
+
+# Hide tick labels on top x-axis
+plt.setp(ax2.get_xticklabels(), visible=False)
+
+# Format y-axis as percentage
 ax1.yaxis.set_major_formatter(PercentFormatter(decimals=0))
+ax2.yaxis.set_major_formatter(PercentFormatter(decimals=0))
 
+# Add diagonal break marks
+kwargs = dict(marker=[(-1, -1), (1, 1)], markersize=12, linestyle='none', color='k', mec='k', mew=1, clip_on=False)
+ax1.plot([0, 1], [1, 1], transform=ax1.transAxes, **kwargs)
+ax2.plot([0, 1], [0, 0], transform=ax2.transAxes, **kwargs)
 
-# Create a second y-axis for the absolute computation time
+# Axis labels
+ax1.set_xlabel('Number of Design Days')
+# ax1.set_ylabel('Difference with 10 Design Days (\%)')
+ax2.set_ylabel('')
+
+# Handle computation time on a secondary y-axis (only on bottom axis)
 if plot_type == 'absolute':
-    ax2 = ax1.twinx()
+    ax1b = ax1.twinx()
     computation_time_in_hours = clustered_results['computation time'] / 3600
-    ax2.scatter(clustered_results['DD'], computation_time_in_hours, color='black', label='Computation Time', marker='x')
-    ax1.set_ylim(-1, 10)
-    ax2.set_ylim(-10, 100)
+    ax1b.scatter(clustered_results['DD'], computation_time_in_hours, color='black', label='Computation Time', marker='x')
+    ax1b.set_ylabel('Computation Time (hours)')
+    ax1b.set_ylim(-10, 100)
 
-    # Set labels for the right y-axis (absolute values in hours)
-    ax2.set_ylabel('Computation Time (hours)')
-    handles2, labels2 = ax2.get_legend_handles_labels()
-    handles, labels = ax1.get_legend_handles_labels()
-    # Combine the legends from both axes
-    ax1.legend(handles + handles2, labels + labels2, loc='upper left')
+    # Combine legends
+    handles1, labels1 = ax1.get_legend_handles_labels()
+    handles2, labels2 = ax1b.get_legend_handles_labels()
+    ax1.legend(handles1 + handles2, labels1 + labels2, loc='upper left')
 else:
-    ax1.set_ylim(-100, 10)
     handles, labels = ax1.get_legend_handles_labels()
-    ax1.legend(handles, labels, loc='center left')
-    xmin, xmax = ax1.get_xlim()
-    ax1.set_xticks(range(int(xmin), int(xmax) + 1, 10))
+    ax1.legend(handles, labels, loc='center right')
 
-# Add grid and combine legends
+# Add grid to both subplots
 ax1.grid(True, alpha=0.2)
+ax2.grid(True, alpha=0.2)
+
+# Optional: set consistent x-ticks
+xmin, xmax = ax1.get_xlim()
+ax1.set_xticks(range(int(xmin), int(xmax) + 1, 10))
+fig.text(0.015, 0.5, 'Difference with 10 Design Days (\%)', va='center', rotation='vertical')
+
 
 # # Save and show plot
 savepath = 'C:/Users/5637635/Documents/OneDrive - Universiteit Utrecht/Research/Multiyear Modeling/MY_Plots/'
 
-plt.tight_layout()  # Apply before saving (optional, still helps with layout)
+plt.tight_layout()
+fig.subplots_adjust(left=0.15)
 
-plt.savefig(f"{savepath}complexity_{run_for}_{plot_type}.pdf", format='pdf', bbox_inches='tight', pad_inches=0.05)
-plt.savefig(f"{savepath}complexity_{run_for}_{plot_type}.svg", format='svg', bbox_inches='tight', pad_inches=0.05)
+# plt.savefig(f"{savepath}complexity_{run_for}_{plot_type}.pdf", format='pdf', bbox_inches='tight', pad_inches=0.05)
+# plt.savefig(f"{savepath}complexity_{run_for}_{plot_type}.svg", format='svg', bbox_inches='tight', pad_inches=0.05)
 
 plt.show()
 
