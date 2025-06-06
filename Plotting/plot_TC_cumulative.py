@@ -9,7 +9,7 @@ from openpyxl.reader.excel import load_workbook
 metric = "costs"       # Choose: "costs" or "emissions"
 scale_type = "per_tonne"   # Choose: "total" or "per_tonne"
 saveas = 'pdf'  # Options: "no", "svg", "pdf", "both"
-filename = 'TC_baseline_' + metric + '_' + scale_type + '_MPW'
+filename = 'TC_baseline_' + metric + '_' + scale_type
 delayed = 0
 sensitivity = 0
 stacked = 0
