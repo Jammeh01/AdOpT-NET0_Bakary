@@ -138,7 +138,7 @@ def fetch_and_process_data_production(resultfolder, data_to_excel_path_olefins, 
 
 
 def plot_production_shares(df, categories):
-    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams.update({'font.family': 'serif', 'font.size': 14})
 
     df.columns.name = None
     df = df.T.reset_index()
@@ -174,7 +174,8 @@ def plot_production_shares(df, categories):
 
 
 def plot_production_shares_stacked(df1, df2, categories, interpolation="spline", separate=1):
-    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams.update({'font.family': 'serif', 'font.size': 14})
+
     def preprocess(df):
         df.columns.name = None
         df = df.T.reset_index()
@@ -257,8 +258,8 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline",
         return x, interpolated
 
     if separate == 1:
-        fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(7, 6), sharex=True,
-                                       gridspec_kw={'hspace': 0.08}
+        fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(7, 6.5), sharex=True,
+                                       gridspec_kw={'hspace': 0.1}
                                        )
 
         for ax, df, label in zip((ax1, ax2), (df1, df2), ('ammonia', 'ethylene')):
@@ -281,8 +282,8 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline",
         fig.legend(handles, labels,
                    loc='lower center',
                    bbox_to_anchor=(0.5, 0),
-                   ncol=3)
-        plt.subplots_adjust(bottom=0.2)
+                   ncol=2)
+        plt.subplots_adjust(bottom=0.25)
 
     else:
         # Merge and plot together
@@ -306,7 +307,6 @@ def plot_production_shares_stacked(df1, df2, categories, interpolation="spline",
         ax1.legend(loc='upper left', bbox_to_anchor=(1, 1))
         ax1.set_title("Combined Production Shares")
 
-    plt.rcParams['font.family'] = 'serif'
     plt.tight_layout()
 
 
@@ -375,7 +375,7 @@ def main():
             ext_map = {'Brownfield': '_bf', 'Greenfield': '_gf'}
             ext = next((v for k, v in ext_map.items() if k in result_type), '')
         else:
-            ext = '_bf_scope'
+            ext = '_bf'
 
         filename = f'production_share_{sensitivity}{ext}'
 
