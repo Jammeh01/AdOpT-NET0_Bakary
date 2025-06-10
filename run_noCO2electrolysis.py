@@ -18,7 +18,7 @@ if execute == 1:
 
 
     # select simulation types
-    node = 'Chemelot'
+    sensitivity = 'noCO2electrolysis'
     scope3 = 1
     run_with_emission_limit = 1
     intervals = ['2030', '2040', '2050']
@@ -64,8 +64,8 @@ if execute == 1:
         model_config['solveroptions']['nodefilestart']['value'] = 200
 
         #change save options
-        model_config['reporting']['save_summary_path']['value'] = resultpath + node
-        model_config['reporting']['save_path']['value'] = resultpath + node
+        model_config['reporting']['save_summary_path']['value'] = resultpath + sensitivity
+        model_config['reporting']['save_path']['value'] = resultpath + sensitivity
 
         # Write the updated JSON data back to the file
         with open(json_filepath, 'w') as json_file:
@@ -81,7 +81,7 @@ if execute == 1:
                 installed_capacities_existing(pyhub, interval, prev_interval, 'Chemelot', casepath_interval)
 
             # change technology set (remove CO2 electrolysis)
-            json_tec_file_path = Path(casepath_interval) / "node_data" / node / "Technologies.json"
+            json_tec_file_path = Path(casepath_interval) / "node_data" / "Chemelot" / "Technologies.json"
             set_tecs = ["ElectricSMR_m", "WGS_m", "AEC", "HaberBosch",
                         "CrackerFurnace_Electric",
                         "ASU", "Boiler_Industrial_NG", "Boiler_El",
@@ -109,12 +109,12 @@ if execute == 1:
                 'value'] = (interval + '_minC_' +
                             'DD' + str(pyhub[interval].data.model_config['optimization']['typicaldays']['N']['value']))
             pyhub[interval].data.time_series['clustered'][
-                interval, node, 'CarbonCost', 'global', 'price'] = 150.31
+                interval, "Chemelot", 'CarbonCost', 'global', 'price'] = 150.31
         else:
             pyhub[interval].data.model_config['reporting']['case_name'][
                 'value'] = interval + '_minC_fullres'
 
-        pyhub[interval].data.time_series['full'][interval, node, 'CarbonCost', 'global', 'price'] = 150.31
+        pyhub[interval].data.time_series['full'][interval, "Chemelot", 'CarbonCost', 'global', 'price'] = 150.31
 
         # Start brownfield optimization
         pyhub[interval].construct_model()
@@ -122,7 +122,7 @@ if execute == 1:
         pyhub[interval].solve()
 
         # change back technology set (add CO2 electrolysis)
-        json_tec_file_path = Path(casepath_interval) / "node_data" / node / "Technologies.json"
+        json_tec_file_path = Path(casepath_interval) / "node_data" / "Chemelot" / "Technologies.json"
         set_tecs = ["ElectricSMR_m", "WGS_m", "AEC", "HaberBosch",
                     "CrackerFurnace_Electric",
                     "ASU", "Boiler_Industrial_NG", "Boiler_El",
@@ -141,6 +141,7 @@ if execute == 1:
             json.dump(json_tec, json_tec_file, indent=4)
 
 
+
 #Run Chemelot greenfield without CO2 electrolyzer
 execute = 1
 
@@ -150,7 +151,7 @@ if execute == 1:
     resultpath = "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Greenfield/"
 
     # select simulation types
-    node = 'Chemelot'
+    sensitivity = 'noCO2electrolysis'
     scope3 = 1
     run_with_emission_limit = 1
     intervals = ['2030', '2040', '2050']
@@ -184,7 +185,7 @@ if execute == 1:
             model_config['optimization']['emission_limit']['value'] = limit
 
             # change technology set (remove CO2 electrolysis)
-            json_tec_file_path = Path(casepath_interval) / "node_data" / node / "Technologies.json"
+            json_tec_file_path = Path(casepath_interval) / "node_data" / "Chemelot" / "Technologies.json"
             set_tecs = ["ElectricSMR_m", "WGS_m", "AEC", "HaberBosch",
                         "CrackerFurnace_Electric",
                         "ASU", "Boiler_Industrial_NG", "Boiler_El",
@@ -212,8 +213,8 @@ if execute == 1:
         model_config['solveroptions']['nodefilestart']['value'] = 200
 
         #change save options
-        model_config['reporting']['save_summary_path']['value'] = resultpath + node
-        model_config['reporting']['save_path']['value'] = resultpath + node
+        model_config['reporting']['save_summary_path']['value'] = resultpath + sensitivity
+        model_config['reporting']['save_path']['value'] = resultpath + sensitivity
 
         # Write the updated JSON data back to the file
         with open(json_filepath, 'w') as json_file:
@@ -229,12 +230,12 @@ if execute == 1:
                 'value'] = (interval + '_minC_' +
                             'DD' + str(pyhub[interval].data.model_config['optimization']['typicaldays']['N']['value']))
             pyhub[interval].data.time_series['clustered'][
-                interval, node, 'CarbonCost', 'global', 'price'] = 150.31
+                interval, "Chemelot", 'CarbonCost', 'global', 'price'] = 150.31
         else:
             pyhub[interval].data.model_config['reporting']['case_name'][
                 'value'] = interval + '_minC_fullres'
 
-        pyhub[interval].data.time_series['full'][interval, node, 'CarbonCost', 'global', 'price'] = 150.31
+        pyhub[interval].data.time_series['full'][interval, "Chemelot", 'CarbonCost', 'global', 'price'] = 150.31
 
         # Start brownfield optimization
         pyhub[interval].construct_model()
@@ -242,7 +243,7 @@ if execute == 1:
         pyhub[interval].solve()
 
         # change back technology set (add CO2 electrolysis)
-        json_tec_file_path = Path(casepath_interval) / "node_data" / node / "Technologies.json"
+        json_tec_file_path = Path(casepath_interval) / "node_data" / "Chemelot" / "Technologies.json"
         set_tecs = ["ElectricSMR_m", "WGS_m", "AEC", "HaberBosch",
                     "CrackerFurnace_Electric",
                     "ASU", "Boiler_Industrial_NG", "Boiler_El",
