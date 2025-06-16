@@ -177,7 +177,7 @@ def test_model_emission_balance(request):
     """
     Tests the emission balance
 
-    This testing function contains two subtests:
+    This testing function contains three subtests:
 
     INFEASIBILITY CASES
     1) Demand at first node is 1, import is allowed at an import emission factor.
@@ -185,13 +185,20 @@ def test_model_emission_balance(request):
 
     FEASIBILITY CASES
     2) Demand at first node is 1, import is allowed at an import emission factor.
+
+    INCLUDING SCOPE 3 EMISSIONS
+    3)
+
     """
     nr_timesteps = 1
 
     dh = make_data_handle(nr_timesteps)
     config = {
         "energybalance": {"violation": {"value": 0}, "copperplate": {"value": 0}},
-        "optimization": {"typicaldays": {"N": {"value": 0}}},
+        "optimization": {
+            "typicaldays": {"N": {"value": 0}},
+            "scope_three_analysis": {"value": 0},
+        },
     }
     period = dh.topology["investment_periods"][0]
     node = dh.topology["nodes"][0]
@@ -223,6 +230,26 @@ def test_model_emission_balance(request):
     assert termination_condition == TerminationCondition.infeasible
 
     # FEASIBILITY CASE
+    m = construct_model(dh)
+    m = construct_network_constraints(m, config)
+    m = construct_nodal_energybalance(m, config)
+    m = construct_emission_balance(m, dh)
+
+    termination_condition = solve_model(m, request.config.solver)
+
+    assert termination_condition == TerminationCondition.optimal
+    assert m.periods[period].var_emissions_net.value == 1
+    assert m.periods[period].var_emissions_pos.value == 1
+    assert m.periods[period].var_emissions_neg.value == 0
+
+    # INCLUDING SCOPE 3 EMISSIONS
+    config = {
+        "energybalance": {"violation": {"value": 0}, "copperplate": {"value": 0}},
+        "optimization": {
+            "typicaldays": {"N": {"value": 0}},
+            "scope_three_analysis": {"value": 1},
+        },
+    }
     m = construct_model(dh)
     m = construct_network_constraints(m, config)
     m = construct_nodal_energybalance(m, config)

@@ -85,6 +85,7 @@ def get_summary(model, solution, folder_path: Path, model_info: dict, data) -> d
     from_carriers = {}
     from_carriers_neg = {}
     from_networks = {}
+    from_electricity = {}
     for period in model.set_periods:
         b_period = model.periods[period]
         set_t = get_set_t(config, b_period)
@@ -143,6 +144,22 @@ def get_summary(model, solution, folder_path: Path, model_info: dict, data) -> d
             for node in model.set_nodes
         )
 
+        if (
+            config["optimization"]["scope_three_analysis"]["value"]
+            and "electricity" in model.set_carriers
+        ):
+            from_electricity[period] = sum(
+                sum(
+                    b_period.node_blocks[node]
+                    .var_import_emissions_pos[t, "electricity"]
+                    .value
+                    * nr_timesteps_averaged
+                    * hour_factors[t - 1]
+                    for t in set_t
+                )
+                for node in model.set_nodes
+            )
+
         if not config["energybalance"]["copperplate"]["value"]:
             from_networks[period] = sum(
                 sum(
@@ -173,6 +190,13 @@ def get_summary(model, solution, folder_path: Path, model_info: dict, data) -> d
     summary_dict["carrier_emissions_neg"] = sum(
         from_carriers_neg[period] for period in model.set_periods
     )
+    if (
+        config["optimization"]["scope_three_analysis"]["value"]
+        and "electricity" in model.set_carriers
+    ):
+        summary_dict["electricity_scope2_emissions"] = sum(
+            from_carriers_neg[period] for period in model.set_periods
+        )
     summary_dict["network_emissions_pos"] = sum(
         from_networks[period] for period in model.set_periods
     )
