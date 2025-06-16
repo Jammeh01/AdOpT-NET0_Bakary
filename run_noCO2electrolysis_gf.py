@@ -12,7 +12,7 @@ if __name__ == "__main__":
     testing = int(sys.argv[1])
     resultpath = Path(sys.argv[2])
     interval = str(sys.argv[3])
-    limit = str(sys.argv[4])
+    limit = float(sys.argv[4])
 
     #Run Chemelot greenfield without CO2 electrolyzer
     # Specify the path to your input data
