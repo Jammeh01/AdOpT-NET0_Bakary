@@ -29,7 +29,7 @@ if __name__ == "__main__":
         nr_DD_days = 10
     pyhub = {}
 
-    ext_interval = 'MY_Chemelot_bf_' + interval
+    ext_interval = 'MY_Chemelot_gf_' + interval
     casepath_interval = casepath / ext_interval
     json_filepath = casepath_interval / "ConfigModel.json"
 
