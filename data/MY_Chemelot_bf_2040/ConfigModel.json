@@ -13,7 +13,7 @@
         },
         "emission_limit": {
             "description": "emission limit to be enforced if objective function is costs_emissionlimit",
-            "value": 261453.7152
+            "value": 746.1856063254895
         },
         "scope_three_analysis": 1,
         "monte_carlo": {
@@ -101,7 +101,7 @@
         },
         "threads": {
             "description": "Value to define number of threads (default is maximum available).",
-            "value": 45
+            "value": 72
         },
         "mipfocus": {
             "description": "Modifies high level solution strategy.",
@@ -203,11 +203,11 @@
         },
         "save_summary_path": {
             "description": "Path to save the summary file path to.",
-            "value": "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Brownfield/test/Chemelot"
+            "value": "C:\\EHubversions\\AdOpT-NET0_Julia\\results\\noCO2electrolysis"
         },
         "save_path": {
             "description": "Option to define the save path.",
-            "value": "Z:/AdOpt_NET0/AdOpt_results/MY/EmissionLimit Brownfield/test/Chemelot"
+            "value": "C:\\EHubversions\\AdOpT-NET0_Julia\\results\\noCO2electrolysis"
         },
         "case_name": {
             "description": "Option to define a case study name that is added to the results folder name.",

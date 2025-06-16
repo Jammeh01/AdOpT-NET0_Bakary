@@ -76,7 +76,7 @@ for i, interval in enumerate(intervals):
         installed_capacities_existing(pyhub, interval, prev_interval, 'Chemelot', casepath_interval)
 
         # change technology set (remove CO2 electrolysis)
-        json_tec_file_path = casepath_interval / "node_data" / "Chemelot" / "Technologies.json"
+        json_tec_file_path = casepath_interval / interval / "node_data" / "Chemelot" / "Technologies.json"
         set_tecs = ["ElectricSMR_m", "WGS_m", "AEC", "HaberBosch",
                     "CrackerFurnace_Electric",
                     "ASU", "Boiler_Industrial_NG", "Boiler_El",

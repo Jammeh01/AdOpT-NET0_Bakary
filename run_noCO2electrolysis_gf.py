@@ -30,7 +30,6 @@ for i, interval in enumerate(intervals):
     ext_interval = 'MY_Chemelot_bf_' + interval
     casepath_interval = casepath / ext_interval
     json_filepath = casepath_interval / "ConfigModel.json"
-    # json_filepath = C:\EHubversions\AdOpT-NET0_Julia\data\MY_Chemelot_bf_2030\ConfigModel.json
 
     with open(json_filepath) as json_file:
         model_config = json.load(json_file)
@@ -49,7 +48,7 @@ for i, interval in enumerate(intervals):
         model_config['optimization']['emission_limit']['value'] = limit
 
         # change technology set (remove CO2 electrolysis)
-        json_tec_file_path = casepath_interval / "node_data" / "Chemelot" / "Technologies.json"
+        json_tec_file_path = casepath_interval / interval / "node_data" / "Chemelot" / "Technologies.json"
         set_tecs = ["ElectricSMR_m", "WGS_m", "AEC", "HaberBosch",
                     "CrackerFurnace_Electric",
                     "ASU", "Boiler_Industrial_NG", "Boiler_El",
