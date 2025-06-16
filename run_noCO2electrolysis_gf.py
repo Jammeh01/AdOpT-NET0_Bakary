@@ -1,0 +1,110 @@
+import json
+from pathlib import Path
+import pandas as pd
+import adopt_net0.data_preprocessing as dp
+from adopt_net0.modelhub import ModelHub
+from adopt_net0.result_management.read_results import add_values_to_summary
+from adopt_net0.utilities import fix_installed_capacities, installed_capacities_existing, \
+    installed_capacities_existing_from_file
+
+
+#Run Chemelot greenfield without CO2 electrolyzer
+# Specify the path to your input data
+casepath = Path(__file__).resolve().parent / 'data'
+resultpath = Path(__file__).resolve().parent / 'results'
+
+# select simulation types
+sensitivity = 'noCO2electrolysis'
+scope3 = 1
+run_with_emission_limit = 1
+intervals = ['2030', '2040', '2050']
+interval_emissionLim = {'2030': 1, '2040': 0.5, '2050': 0}
+testing = 1
+if testing:
+    nr_DD_days = 0
+else:
+    nr_DD_days = 10
+pyhub = {}
+
+for i, interval in enumerate(intervals):
+    ext_interval = 'MY_Chemelot_bf_' + interval
+    casepath_interval = casepath / ext_interval
+    json_filepath = casepath_interval / "ConfigModel.json"
+    # json_filepath = C:\EHubversions\AdOpT-NET0_Julia\data\MY_Chemelot_bf_2030\ConfigModel.json
+
+    with open(json_filepath) as json_file:
+        model_config = json.load(json_file)
+
+    model_config['optimization']['typicaldays']['N']['value'] = nr_DD_days
+
+    if interval == '2030':
+        model_config['optimization']['objective']['value'] = 'costs'
+    else:
+        prev_interval = intervals[i - 1]
+        model_config['optimization']['objective']['value'] = "costs_emissionlimit"
+        if nr_DD_days > 0:
+            limit = interval_emissionLim[interval] * pyhub[prev_interval].model['clustered'].var_emissions_net.value
+        else:
+            limit = interval_emissionLim[interval] * pyhub[prev_interval].model['full'].var_emissions_net.value
+        model_config['optimization']['emission_limit']['value'] = limit
+
+        # change technology set (remove CO2 electrolysis)
+        json_tec_file_path = casepath_interval / "node_data" / "Chemelot" / "Technologies.json"
+        set_tecs = ["ElectricSMR_m", "WGS_m", "AEC", "HaberBosch",
+                    "CrackerFurnace_Electric",
+                    "ASU", "Boiler_Industrial_NG", "Boiler_El",
+                    "RWGS", "MeOHsynthesis", "MTO", "EDH", "PDH", "MPW2methanol",
+                    "DirectMeOHsynthesis",
+                    "Storage_Ammonia", "Storage_CO2", "Storage_Ethylene",
+                    "Storage_H2", "Storage_Battery", "Storage_Propylene",
+                    "CO2toEmission", "feedgas_mixer", "naphtha_mixer", "PE_mixer", "CO2_mixer", "HBfeed_mixer",
+                    "syngas_mixer"]
+
+        with open(json_tec_file_path, "r") as json_tec_file:
+            json_tec = json.load(json_tec_file)
+
+        json_tec['new'] = set_tecs
+        with open(json_tec_file_path, "w") as json_tec_file:
+            json.dump(json_tec, json_tec_file, indent=4)
+
+    # Scope 3 analysis yes/no
+    model_config['optimization']['scope_three_analysis'] = scope3
+
+    # solver settings
+    model_config['solveroptions']['timelim']['value'] = 24*30
+    model_config['solveroptions']['mipgap']['value'] = 0.01
+    model_config['solveroptions']['threads']['value'] = 72
+    model_config['solveroptions']['nodefilestart']['value'] = 200
+
+    #change save options
+    model_config['reporting']['save_summary_path']['value'] = str(resultpath / sensitivity)
+    model_config['reporting']['save_path']['value'] = str(resultpath / sensitivity)
+
+    # Write the updated JSON data back to the file
+    with open(json_filepath, 'w') as json_file:
+        json.dump(model_config, json_file, indent=4)
+
+    # Construct and solve the model
+    pyhub[interval] = ModelHub()
+    if testing:
+        pyhub[interval].read_data(casepath_interval, start_period=0, end_period=24)
+    else:
+        pyhub[interval].read_data(casepath_interval)
+
+    # Set case name
+    if nr_DD_days > 0:
+        pyhub[interval].data.model_config['reporting']['case_name'][
+            'value'] = (interval + '_minC_' +
+                        'DD' + str(pyhub[interval].data.model_config['optimization']['typicaldays']['N']['value']))
+        pyhub[interval].data.time_series['clustered'][
+            interval, "Chemelot", 'CarbonCost', 'global', 'price'] = 150.31
+    else:
+        pyhub[interval].data.model_config['reporting']['case_name'][
+            'value'] = interval + '_minC_fullres'
+
+    pyhub[interval].data.time_series['full'][interval, "Chemelot", 'CarbonCost', 'global', 'price'] = 150.31
+
+    # Start brownfield optimization
+    pyhub[interval].construct_model()
+    pyhub[interval].construct_balances()
+    pyhub[interval].solve()
