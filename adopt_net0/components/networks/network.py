@@ -583,7 +583,7 @@ class Network(ModelComponent):
             # Size is variable
             b_arc.var_size = pyo.Var(
                 within=size_domain,
-                bounds=(b_netw.para_size_min, b_arc.para_size_max),
+                bounds=(b_netw.para_size_min * 0, b_arc.para_size_max),
             )
 
         return b_arc
@@ -763,7 +763,7 @@ class Network(ModelComponent):
             self.set_t,
             domain=pyo.NonNegativeReals,
             bounds=(
-                b_netw.para_size_min * rated_capacity,
+                b_netw.para_size_min * rated_capacity * 0,
                 b_arc.para_size_max * rated_capacity,
             ),
         )
@@ -771,7 +771,7 @@ class Network(ModelComponent):
             self.set_t,
             domain=pyo.NonNegativeReals,
             bounds=(
-                b_netw.para_size_min * rated_capacity,
+                b_netw.para_size_min * rated_capacity * 0,
                 b_arc.para_size_max * rated_capacity,
             ),
         )

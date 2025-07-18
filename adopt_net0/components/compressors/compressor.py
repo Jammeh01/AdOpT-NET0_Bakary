@@ -578,3 +578,188 @@ class Compressor(ModelComponent):
         b_compr.disjunction_decommission_full = gdp.Disjunction(rule=bind_disjunctions)
 
         return b_compr
+
+    def write_results_compressor_design(self, h5_group, model_block):
+        """
+        Function to report compressor design
+
+        :param model_block: pyomo network block
+        :param h5_group: h5 group to write to
+        """
+        if self.compression_active == 1:
+            h5_group.create_dataset("compressor", data=[self.name])
+            h5_group.create_dataset("existing", data=[self.existing])
+            h5_group.create_dataset(
+                "max_flow",
+                data=[max(model_block.var_flow[t].value for t in self.set_t_global)],
+            )
+            h5_group.create_dataset("size", data=[model_block.var_size.value])
+            if self.existing == 0:
+                h5_group.create_dataset("capex", data=[model_block.var_capex.value])
+                # h5_group.create_dataset("opex_variable",
+                #                         data=[sum(model_block.var_opex_variable[t] for t in self.set_t_global)])
+            else:
+                return
+        else:
+            return
+        # h5_group.create_dataset(
+        #     "capex_tot",
+        #     data=[
+        #         (
+        #             model_block.var_capex.value + model_block.var_capex_ccs.value
+        #             if hasattr(model_block, "var_capex_ccs")
+        #             else 0
+        #         )
+        #     ],
+        # )
+        # h5_group.create_dataset(
+        #     "opex_variable",
+        #     data=[
+        #         sum(
+        #             (
+        #                 model_block.var_opex_variable[t].value
+        #                 + model_block.var_opex_variable_ccs.value
+        #                 if hasattr(model_block, "var_opex_variable_ccs")
+        #                 else 0
+        #             )
+        #             for t in self.set_t_global
+        #         )
+        #     ],
+        # )
+        # h5_group.create_dataset(
+        #     "opex_fixed",
+        #     data=[
+        #         (
+        #             model_block.var_opex_fixed.value
+        #             + model_block.var_opex_fixed_ccs.value
+        #             if hasattr(model_block, "var_opex_fixed_ccs")
+        #             else 0
+        #         )
+        #     ],
+        # )
+        # h5_group.create_dataset(
+        #     "emissions_pos",
+        #     data=[
+        #         sum(
+        #             model_block.var_tec_emissions_pos[t].value
+        #             for t in self.set_t_global
+        #         )
+        #     ],
+        # )
+        # h5_group.create_dataset(
+        #     "emissions_neg",
+        #     data=[
+        #         sum(
+        #             model_block.var_tec_emissions_neg[t].value
+        #             for t in self.set_t_global
+        #         )
+        #     ],
+        # )
+        # if self.ccs_possible:
+        #     h5_group.create_dataset("size_ccs", data=[model_block.var_size_ccs.value])
+        #     h5_group.create_dataset("capex_tec", data=[model_block.var_capex.value])
+        #     h5_group.create_dataset("capex_ccs", data=[model_block.var_capex_ccs.value])
+        #     h5_group.create_dataset(
+        #         "opex_fixed_ccs", data=[model_block.var_opex_fixed_ccs.value]
+        #     )
+        #
+        # h5_group.create_dataset(
+        #     "para_unitCAPEX", data=[model_block.para_unit_capex.value]
+        # )
+        # if hasattr(model_block, "para_fix_capex"):
+        #     h5_group.create_dataset(
+        #         "para_fixCAPEX", data=[model_block.para_fix_capex.value]
+        #     )
+
+    def write_results_compressor_operation(self, h5_group, model_block):
+        """
+        Function to report technology operation
+
+        :param model_block: pyomo network block
+        :param h5_group: h5 group to write to
+        """
+        # if model_block.find_component("var_flow"):
+        #     for car in model_block.set_carrier:
+        #         h5_group.create_dataset(
+        #             f"{car}_input",
+        #             data=[
+        #                 model_block.var_flow[t].value for t in self.set_t_global
+        #             ],
+        #         )
+
+        h5_group.create_dataset(
+            "flow", data=[model_block.var_flow[t].value for t in self.set_t_global]
+        )
+        # for car in model_block.set_consumed_carriers:
+        #     h5_group.create_dataset(
+        #         "max_eletricity",
+        #         data=[max(model_block.var_consumption_energy[t, car].value for t in self.set_t_global)]
+        #     )
+        for car in model_block.set_consumed_carriers:
+            h5_group.create_dataset(
+                "energy consumption",
+                data=[
+                    model_block.var_consumption_energy[t, car].value
+                    for t in self.set_t_global
+                ],
+            )
+        # h5_group.create_dataset(
+        #     "emissions_pos",
+        #     data=[
+        #         model_block.var_tec_emissions_pos[t].value for t in self.set_t_global
+        #     ],
+        # )
+        # h5_group.create_dataset(
+        #     "emissions_neg",
+        #     data=[
+        #         model_block.var_tec_emissions_neg[t].value for t in self.set_t_global
+        #     ],
+        # )
+        # if model_block.find_component("var_x"):
+        #     h5_group.create_dataset(
+        #         "var_x",
+        #         data=[
+        #             0 if x is None else x
+        #             for x in [
+        #                 model_block.var_x[t].value for t in self.set_t_performance
+        #             ]
+        #         ],
+        #     )
+        # if model_block.find_component("var_y"):
+        #     h5_group.create_dataset(
+        #         "var_y",
+        #         data=[
+        #             0 if x is None else x
+        #             for x in [
+        #                 model_block.var_y[t].value for t in self.set_t_performance
+        #             ]
+        #         ],
+        #     )
+        # if model_block.find_component("var_z"):
+        #     h5_group.create_dataset(
+        #         "var_z",
+        #         data=[
+        #             0 if x is None else x
+        #             for x in [
+        #                 model_block.var_z[t].value for t in self.set_t_performance
+        #             ]
+        #         ],
+        #     )
+        #
+        # if model_block.find_component("set_carriers_ccs"):
+        #     for car in model_block.set_carriers_ccs:
+        #         h5_group.create_dataset(
+        #             f"{car}_var_input_ccs",
+        #             data=[
+        #                 model_block.var_input_ccs[t, car].value
+        #                 for t in self.set_t_performance
+        #             ],
+        #         )
+        #     for car in model_block.set_output_carriers_ccs:
+        #         h5_group.create_dataset(
+        #             f"{car}_var_output_ccs",
+        #             data=[
+        #                 model_block.var_output_ccs[t, car].value
+        #                 for t in self.set_t_performance
+        #             ],
+        #         )

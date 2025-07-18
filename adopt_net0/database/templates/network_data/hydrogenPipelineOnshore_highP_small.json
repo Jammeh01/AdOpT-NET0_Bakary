@@ -4,13 +4,13 @@
   "capex_defined_per_arc": 0,
   "size_max_defined_per_arc": 0,
   "decommission": 0,
-  "size_min": 800,
-  "size_max": 800,
+  "size_min": 1000,
+  "size_max": 1000,
   "Economics": {
     "comment": "CAPEX coefficients are in EUR, EUR/MW or EUR/MW/km, opex_variable in EUR/MWh total output, opex_fixed in % of CAPEX_annual",
-    "gamma1": 1000000,
+    "gamma1": 2500000,
     "gamma2": 0,
-    "gamma3": 450E3,
+    "gamma3": 1850E3,
     "gamma4": 0,
     "opex_variable": 0.01,
     "opex_fixed": 0,
@@ -28,8 +28,8 @@
     "energyconsumption": [],
     "pressure": {
       "hydrogen": {
-        "inlet": 5,
-        "outlet": 5
+        "inlet": 50,
+        "outlet": 50
       }
     }
   },
