@@ -595,7 +595,7 @@ class Compressor(ModelComponent):
             )
             h5_group.create_dataset("size", data=[model_block.var_size.value])
             if self.existing == 0:
-                h5_group.create_dataset("capex", data=[model_block.var_capex.value])
+                h5_group.create_dataset("capex_tot", data=[model_block.var_capex.value])
                 # h5_group.create_dataset("opex_variable",
                 #                         data=[sum(model_block.var_opex_variable[t] for t in self.set_t_global)])
             else:
