@@ -1124,7 +1124,9 @@ class Network(ModelComponent):
             arc_group.create_dataset("network", data=self.name)
             arc_group.create_dataset("fromNode", data=arc_name[0])
             arc_group.create_dataset("toNode", data=arc_name[1])
-            arc_group.create_dataset("size", data=arc.var_size.value)
+            arc_group.create_dataset(
+                "size", data=arc.var_size.value * coeff_ti["rated_capacity"]
+            )
             arc_group.create_dataset("capex", data=arc.var_capex.value)
             arc_group.create_dataset(
                 "opex_fixed",
