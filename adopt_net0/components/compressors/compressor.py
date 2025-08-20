@@ -298,27 +298,44 @@ class Compressor(ModelComponent):
         annualization_factor = annualize(
             discount_rate, economics["lifetime"], fraction_of_year_modelled
         )
+        capex_model = economics["capex_model"]
 
-        b_compr.para_unit_capex = pyo.Param(
-            domain=pyo.Reals,
-            initialize=economics["unit_capex"],
-            mutable=True,
-        )
-        b_compr.para_fix_capex = pyo.Param(
-            domain=pyo.Reals,
-            initialize=economics["fix_capex"],
-            mutable=True,
-        )
-        b_compr.para_unit_capex_annual = pyo.Param(
-            domain=pyo.Reals,
-            initialize=annualization_factor * economics["unit_capex"],
-            mutable=True,
-        )
-        b_compr.para_fix_capex_annual = pyo.Param(
-            domain=pyo.Reals,
-            initialize=annualization_factor * economics["fix_capex"],
-            mutable=True,
-        )
+        if capex_model == 1:
+
+            b_compr.para_unit_capex = pyo.Param(
+                domain=pyo.Reals,
+                initialize=economics["unit_capex"],
+                mutable=True,
+            )
+
+            b_compr.para_unit_capex_annual = pyo.Param(
+                domain=pyo.Reals,
+                initialize=annualization_factor * economics["unit_capex"],
+                mutable=True,
+            )
+
+        elif capex_model == 3:
+
+            b_compr.para_unit_capex = pyo.Param(
+                domain=pyo.Reals,
+                initialize=economics["unit_capex"],
+                mutable=True,
+            )
+            b_compr.para_fix_capex = pyo.Param(
+                domain=pyo.Reals,
+                initialize=economics["fix_capex"],
+                mutable=True,
+            )
+            b_compr.para_unit_capex_annual = pyo.Param(
+                domain=pyo.Reals,
+                initialize=annualization_factor * economics["unit_capex"],
+                mutable=True,
+            )
+            b_compr.para_fix_capex_annual = pyo.Param(
+                domain=pyo.Reals,
+                initialize=annualization_factor * economics["fix_capex"],
+                mutable=True,
+            )
 
         return b_compr
 
@@ -363,11 +380,53 @@ class Compressor(ModelComponent):
         annualization_factor = annualize(
             discount_rate, economics["lifetime"], fraction_of_year_modelled
         )
+        capex_model = economics["capex_model"]
 
-        b_compr.const_capex_aux = pyo.Constraint(
-            expr=b_compr.var_size * b_compr.para_unit_capex_annual
-            == b_compr.var_capex_aux
-        )
+        if capex_model == 1:
+
+            b_compr.const_capex_aux = pyo.Constraint(
+                expr=b_compr.var_size * b_compr.para_unit_capex_annual
+                == b_compr.var_capex_aux
+            )
+
+        elif capex_model == 3:
+
+            self.big_m_transformation_required = 1
+            s_indicators = range(0, 2)
+
+            if self.existing == 1:
+                b_compr.const_capex_aux = pyo.Constraint(
+                    expr=b_compr.var_size * b_compr.para_unit_capex_annual
+                    + b_compr.para_fix_capex_annual
+                    == b_compr.var_capex_aux
+                )
+            else:
+
+                def init_installation(dis, ind):
+                    if ind == 0:  # tech not installed
+                        dis.const_capex_aux = pyo.Constraint(
+                            expr=b_compr.var_capex_aux == 0
+                        )
+                        dis.const_not_installed = pyo.Constraint(
+                            expr=b_compr.var_size == 0
+                        )
+                    else:  # tech installed
+                        dis.const_capex_aux = pyo.Constraint(
+                            expr=b_compr.var_size * b_compr.para_unit_capex_annual
+                            + b_compr.para_fix_capex_annual
+                            == b_compr.var_capex_aux
+                        )
+
+                b_compr.dis_installation = gdp.Disjunct(
+                    s_indicators, rule=init_installation
+                )
+
+                def bind_disjunctions(dis):
+                    return [b_compr.dis_installation[i] for i in s_indicators]
+
+                b_compr.disjunction_installation = gdp.Disjunction(
+                    rule=bind_disjunctions
+                )
 
         if self.existing == 0:
             b_compr.const_capex = pyo.Constraint(
