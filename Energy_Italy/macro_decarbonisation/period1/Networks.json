@@ -1,8 +1,4 @@
 {
-    "existing": [
-        "electricityOnshore"
-    ],
-    "new": [
-        "electricityOnshore"
-    ]
+    "existing": [],
+    "new": []
 }
