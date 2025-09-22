@@ -1,0 +1,8 @@
+{
+    "existing": {
+        "PermanentStorage_CO2_simple": 10000
+    },
+    "new": [
+        "DAC_Adsorption"
+    ]
+}

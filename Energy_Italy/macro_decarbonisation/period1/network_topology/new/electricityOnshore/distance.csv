@@ -1,0 +1,6 @@
+;northwest;northeast;center;south;islands
+northwest;0;350;450;750;950
+northeast;350;0;420;680;880
+center;450;420;0;380;520
+south;750;680;380;0;180
+islands;950;880;520;180;0
