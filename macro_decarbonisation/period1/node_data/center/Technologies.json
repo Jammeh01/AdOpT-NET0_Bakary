@@ -1,0 +1,15 @@
+{
+    "existing": {
+        "GasTurbine_simple": 9200,
+        "Boiler_Small_NG": 3200,
+        "Photovoltaic": 3800,
+        "WindTurbine_Onshore_4000": 1400
+    },
+    "new": [
+        "HeatPump_AirSourced",
+        "Storage_Battery",
+        "Photovoltaic",
+        "WindTurbine_Onshore_4000",
+        "Storage_H2"
+    ]
+}
