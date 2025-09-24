@@ -10,7 +10,7 @@
     "unit_CAPEX": 1.324257263E+7,
     "fix_CAPEX": 0,
     "OPEX_variable": 2.7,
-    "OPEX_fixed": 0.23,
+    "OPEX_fixed": 0.045,
     "discount_rate": 0.1,
     "lifetime": 25,
     "decommission_cost": 0
