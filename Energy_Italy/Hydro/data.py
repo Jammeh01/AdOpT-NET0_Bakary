@@ -53,12 +53,12 @@ def import_hydro_inflows(input_data_path):
                 hydro_series = hydro_series.reindex(
                     range(8760), method='ffill')
 
-            # Ensure hydro data is in the correct format as a simple numeric list
-            # This avoids pandas Series conversion issues in AdOpT-NET0's processing
-            hydro_values = hydro_series.values.astype(float)
+            # Ensure hydro data maintains pandas Series format with proper index
+            # This is required for AdOpT-NET0's .iloc indexing in hydro_open.py
+            hydro_series.index = range(len(hydro_series))
 
-            # Add to climate data as a simple column
-            climate_data["Hydro_Reservoir_existing_inflow"] = hydro_values
+            # Add to climate data while preserving Series format
+            climate_data["Hydro_Reservoir_existing_inflow"] = hydro_series
 
             # Save with proper format
             climate_data.to_csv(climate_data_file, index=False, sep=";")

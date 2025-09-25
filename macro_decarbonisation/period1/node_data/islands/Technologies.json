@@ -1,5 +1,6 @@
 {
     "existing": {
+        "Hydro_Reservoir": 2100,
         "GasTurbine_simple": 3200,
         "Boiler_Small_NG": 800,
         "Photovoltaic": 2600,
