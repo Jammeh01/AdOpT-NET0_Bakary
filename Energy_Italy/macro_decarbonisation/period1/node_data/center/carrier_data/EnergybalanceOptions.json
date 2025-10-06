@@ -2,10 +2,10 @@
     "electricity": {
         "curtailment_possible": 0
     },
-    "heat": {
+    "gas": {
         "curtailment_possible": 0
     },
-    "gas": {
+    "heat": {
         "curtailment_possible": 0
     },
     "hydrogen": {

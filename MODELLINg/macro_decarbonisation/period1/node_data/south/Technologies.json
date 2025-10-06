@@ -1,0 +1,12 @@
+{
+    "existing": {
+        "Hydro_Reservoir": 45552000,
+        "GasTurbine_simple": 7800,
+        "Boiler_Small_NG": 2400
+    },
+    "new": [
+        "HeatPump_AirSourced",
+        "Storage_Battery",
+        "Storage_H2"
+    ]
+}

@@ -1,0 +1,6 @@
+;northwest;northeast;center;south;islands
+northwest;0;1;1;0;0
+northeast;1;0;1;0;0
+center;1;1;0;1;0
+south;0;0;1;0;1
+islands;0;0;0;1;0
