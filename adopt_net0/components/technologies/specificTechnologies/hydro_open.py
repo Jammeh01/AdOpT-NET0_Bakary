@@ -255,7 +255,7 @@ class HydroOpen(Technology):
                     * sum(
                         (1 - eta_lambda) ** i for i in range(0, nr_timesteps_averaged)
                     )
-                    + hydro_natural_inflow.iloc[t - 1]
+                    + hydro_natural_inflow[t - 1]
                 )
             else:  # all other time intervals
                 return (
@@ -270,7 +270,7 @@ class HydroOpen(Technology):
                     * sum(
                         (1 - eta_lambda) ** i for i in range(0, nr_timesteps_averaged)
                     )
-                    + hydro_natural_inflow.iloc[t - 1]
+                    + hydro_natural_inflow[t - 1]
                 )
 
         b_tec.const_storage_level = pyo.Constraint(
